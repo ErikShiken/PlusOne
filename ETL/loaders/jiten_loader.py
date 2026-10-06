@@ -14,7 +14,7 @@ class JitenLoader(LoaderBase):
         self.reading_sql = "INSERT INTO readings (vocab_id, reading, frequency_rank) VALUES (?, ?, ?)"
 
 
-    def load(self, entries: Iterable[WordReading]):
+    def load(self, entries: Iterable[WordReading]) -> None:
         ids = {}
         batch = []
         for entry in entries:

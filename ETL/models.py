@@ -21,7 +21,7 @@ class WordReading:
     reading: str
     frequency_rank: int
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.frequency_rank = int(self.frequency_rank)
 
 @dataclass
@@ -31,7 +31,7 @@ class Reading:
     frequency_rank: int
     id: int | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.frequency_rank = int(self.frequency_rank)
 
 class ReadingRow(NamedTuple):

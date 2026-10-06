@@ -1,9 +1,11 @@
+from typing import Sequence, Iterator
+
 from ETL.extractors.extractor_base import ExtractorBase
 import csv
 
 class JitenExtractor(ExtractorBase):
     language = "ja"
-    def extract(self, file_path: str):
+    def extract(self, file_path: str) -> Iterator[dict[str, str]]:
         with open(file_path, "rb") as f:
             first_three = f.read(3)
             if first_three == self.UTF8_BOM:

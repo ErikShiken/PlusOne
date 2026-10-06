@@ -1,5 +1,6 @@
 import codecs
 from abc import ABC, abstractmethod
+from typing import Iterator
 
 
 class ExtractorBase(ABC):
@@ -7,5 +8,5 @@ class ExtractorBase(ABC):
     encoding = "utf-8"
 
     @abstractmethod
-    def extract(self, file_path:str):
+    def extract(self, file_path:str) -> Iterator[dict[str, str]]:
         pass
