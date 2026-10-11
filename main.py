@@ -57,15 +57,14 @@ if __name__ == '__main__':
         rows = JitenExtractor().extract("frequency_list_global.csv")
         entries = (JitenTransformer().transform(row) for row in rows)
         JitenLoader(conn).load(islice(entries, 2500))
-        load_known_words(conn, JapaneseSentence.read_user_known())
+        load_known_words(conn, JapaneseSentence.read_user_known("user_known.dat"))
 
         print("readings", conn.execute("SELECT COUNT(*) FROM readings").fetchone())
         print("vocabulary", conn.execute("SELECT COUNT(*) FROM vocabulary").fetchone())
     finally:
         conn.close()
 
-    user_known = JapaneseSentence.read_user_known()
-    JapaneseSentence.set_grammar("global_rules.json")
-    sentence = JapaneseSentence(user_known, unknown_rule)
+    sentence = JapaneseSentence.from_file("user_known.dat", unknown_rule)
+    sentence.set_grammar("global_rules.json")
 
     sentence.visit("vocabulary", "食べる")

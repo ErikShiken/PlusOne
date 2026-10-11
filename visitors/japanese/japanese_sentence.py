@@ -1,6 +1,6 @@
 import json
 from types import MappingProxyType
-from typing import Callable
+from typing import Callable, Self
 
 from visitors.sentence_visitor import SentenceVisitor
 from visitors.registry import HANDLERS, handles
@@ -32,11 +32,15 @@ class JapaneseSentence(SentenceVisitor):
         self.unknown_rule(self.unknowns)
 
     @staticmethod
-    def read_user_known() -> set[str]:
-        with open("user_known.dat", "r", encoding="utf-8") as f:
+    def read_user_known(user_known_file: str) -> set[str]:
+        with open(user_known_file, "r", encoding="utf-8") as f:
             return set(f.read().splitlines())
 
     @classmethod
     def set_grammar(cls, grammar_file: str) -> None:
         with open(grammar_file, "r", encoding="utf-8") as f:
             cls.grammar = MappingProxyType(json.load(f))
+
+    @classmethod
+    def from_file(cls, user_known_file: str, unknown_rule: Callable[[set[str]], None]) -> Self:
+        return cls(cls.read_user_known(user_known_file), unknown_rule)

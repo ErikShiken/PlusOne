@@ -34,3 +34,7 @@ class JitenLoader(LoaderBase):
         if len(batch) > 0:
             self.conn.executemany(self.reading_sql, batch)
         self.conn.commit()
+
+    def __repr__(self) -> str:
+        class_name = type(self).__name__
+        return f"{class_name}(batch_limit={self.batch_limit!r})"
