@@ -1,12 +1,16 @@
+import logging
 from typing import Iterable
 
 from ETL.loaders.jiten_loader import JitenLoader
 from ETL.transform.jiten_transformer import JitenTransformer
 from visitors.japanese.japanese_sentence import JapaneseSentence
+from visitors.rules.unknown_rule import unknown_rule
 import sqlite3
 from ETL.extractors.jiten_extractor import JitenExtractor
 
 from itertools import islice
+
+logging.basicConfig(level=logging.DEBUG)
 
 def find_vocab_id(conn: sqlite3.Connection, word: str) -> int | None:
     row = conn.execute(
@@ -62,4 +66,6 @@ if __name__ == '__main__':
 
     user_known = JapaneseSentence.read_user_known()
     JapaneseSentence.set_grammar("global_rules.json")
-    sentence = JapaneseSentence(user_known)
+    sentence = JapaneseSentence(user_known, unknown_rule)
+
+    sentence.visit("vocabulary", "食べる")

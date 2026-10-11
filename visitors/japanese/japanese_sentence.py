@@ -1,19 +1,27 @@
 import json
 from types import MappingProxyType
+from typing import Callable
 
 from visitors.sentence_visitor import SentenceVisitor
-from unknown_exception import UnknownException
+from visitors.registry import HANDLERS, handles
 
 class JapaneseSentence(SentenceVisitor):
     grammar = None
 
-    def __init__(self, user_knowns: set[str]):
+    def __init__(self, user_knowns: set[str], unknown_rule: Callable[[set[str]], None]):
         self.unknowns: set[str] = set()
         self.user_known = user_knowns
+        self.unknown_rule = unknown_rule
 
+    def visit(self, kind: str, item: str) -> None:
+        handler = HANDLERS[kind]
+        handler(self, item)
+
+    @handles("vocabulary")
     def visit_vocabulary(self, vocabulary: str) -> None:
         self.count_unknowns(vocabulary)
 
+    @handles("grammar")
     def visit_grammar_rule(self, grammar_rule: str) -> None:
         self.count_unknowns(grammar_rule)
 
@@ -21,9 +29,7 @@ class JapaneseSentence(SentenceVisitor):
         if item not in self.user_known:
             self.unknowns.add(item)
 
-        num_unknowns = len(self.unknowns)
-        if num_unknowns > 1:
-            raise UnknownException(num_unknowns)
+        self.unknown_rule(self.unknowns)
 
     @staticmethod
     def read_user_known() -> set[str]:

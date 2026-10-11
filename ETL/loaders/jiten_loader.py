@@ -1,19 +1,24 @@
 from typing import Iterable
 
+from performance.clock_decorator import clock
 from ETL.loaders.loader_base import LoaderBase
 from ETL.models import WordReading
 
 import sqlite3
 
+from performance.clock_decorator import clock
+
+
 class JitenLoader(LoaderBase):
     language = "ja"
+
     def __init__(self, conn: sqlite3.Connection, *, batch_limit: int = 1000):
         self.conn = conn
         self.batch_limit = batch_limit
         self.vocab_sql = "INSERT INTO vocabulary (word) VALUES (?)"
         self.reading_sql = "INSERT INTO readings (vocab_id, reading, frequency_rank) VALUES (?, ?, ?)"
 
-
+    @clock
     def load(self, entries: Iterable[WordReading]) -> None:
         ids = {}
         batch = []
