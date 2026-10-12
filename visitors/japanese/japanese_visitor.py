@@ -5,10 +5,11 @@ from typing import Callable, Self
 from visitors.sentence_visitor import SentenceVisitor
 from visitors.registry import HANDLERS, handles
 
-class JapaneseSentence(SentenceVisitor):
+class JapaneseVisitor(SentenceVisitor):
     grammar = None
 
-    def __init__(self, user_knowns: set[str], unknown_rule: Callable[[set[str]], None]):
+    UnknownRule = Callable[[set[str]], None]
+    def __init__(self, user_knowns: set[str], unknown_rule: UnknownRule):
         self.unknowns: set[str] = set()
         self.user_known = user_knowns
         self.unknown_rule = unknown_rule

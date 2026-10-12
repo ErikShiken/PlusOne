@@ -1,9 +1,10 @@
 import logging
-from typing import Iterable
+from typing import Iterable, Sequence
 
 from ETL.loaders.jiten_loader import JitenLoader
+from ETL.models import Sentence
 from ETL.transform.jiten_transformer import JitenTransformer
-from visitors.japanese.japanese_sentence import JapaneseSentence
+from visitors.japanese.japanese_visitor import JapaneseVisitor
 from visitors.rules.unknown_rule import unknown_rule
 import sqlite3
 from ETL.extractors.jiten_extractor import JitenExtractor
@@ -57,14 +58,40 @@ if __name__ == '__main__':
         rows = JitenExtractor().extract("frequency_list_global.csv")
         entries = (JitenTransformer().transform(row) for row in rows)
         JitenLoader(conn).load(islice(entries, 2500))
-        load_known_words(conn, JapaneseSentence.read_user_known("user_known.dat"))
+        load_known_words(conn, JapaneseVisitor.read_user_known("user_known.dat"))
 
         print("readings", conn.execute("SELECT COUNT(*) FROM readings").fetchone())
         print("vocabulary", conn.execute("SELECT COUNT(*) FROM vocabulary").fetchone())
     finally:
         conn.close()
 
-    sentence = JapaneseSentence.from_file("user_known.dat", unknown_rule)
-    sentence.set_grammar("global_rules.json")
+    visitor = JapaneseVisitor.from_file("user_known.dat", unknown_rule)
+    visitor.set_grammar("global_rules.json")
 
-    sentence.visit("vocabulary", "食べる")
+    visitor.visit("vocabulary", "食べる")
+
+    s = Sentence(["昨日", "買った", "本", "を", "読んだ"])
+    print(s)
+    print(len(s))
+    print(s[1:3])
+    print(s[-1])
+    print("を" in s)
+
+    a = Sentence(["本", "を", "読んだ"])
+    b = Sentence(["本", "を", "読んだ"])
+    print(a == b)  # True
+    print(a == ["本"])
+
+    a = Sentence(["本", "を", "読んだ"])
+    b = Sentence(["本", "を", "読んだ"])
+    c = Sentence(["猫", "が", "寝て", "いる"])
+
+    print(hash(a) == hash(b))  # True: same words, same hash
+    print(len({a, b, c}))  # 2: the set dropped the duplicate
+
+    s = Sentence(["昨日", "買った", "本", "を", "読んだ"])
+    print("Sequence examples: chapter 13")
+    print(s.index("本"))  # 2
+    print(s.count("を"))  # 1
+    print(list(reversed(s)))  # ['読んだ', 'を', '本', '買った', '昨日']
+    print(isinstance(s, Sequence))  # True
