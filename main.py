@@ -95,3 +95,10 @@ if __name__ == '__main__':
     print(s.count("を"))  # 1
     print(list(reversed(s)))  # ['読んだ', 'を', '本', '買った', '昨日']
     print(isinstance(s, Sequence))  # True
+
+    print("Chatper 14: mixins")
+    print(JitenLoader.__mro__)
+
+    print("chapter 16: operators")
+    s = Sentence(["本", "を", "読んだ"])
+    print(["昨日"] + s)  # Sentence(['昨日', '本', 'を', '読んだ'])

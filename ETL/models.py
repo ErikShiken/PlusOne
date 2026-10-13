@@ -1,4 +1,6 @@
-from collections.abc import Sequence
+from __future__ import annotations
+
+from collections.abc import Sequence, Iterable
 
 from dataclasses import dataclass
 
@@ -42,16 +44,26 @@ class ReadingRow(NamedTuple):
     reading: str
     frequency_rank: int | None
 
-@dataclass
 class Sentence(Sequence[str]):
-    def __init__(self, words: list[str]):
+    def __init__(self, words: Iterable[str]):
         self._words = list(words)
+
+    def __add__(self, other: object) -> Sentence:
+        if not isinstance(other, Sentence):
+            return NotImplemented
+        return Sentence(self._words + other._words)
+
+    def __radd__(self, other: Sequence[str]) -> Sentence:
+        return Sentence(other) + self
 
     def __len__(self) -> int:
         return len(self._words)
 
     def __repr__(self) -> str:
         return f"Sentence({self._words!r})"
+
+    def __str__(self):
+        return "".join(self._words)
 
     def __getitem__(self, key):
         if isinstance(key, slice):
