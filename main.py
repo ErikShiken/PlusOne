@@ -102,3 +102,9 @@ if __name__ == '__main__':
     print("chapter 16: operators")
     s = Sentence(["本", "を", "読んだ"])
     print(["昨日"] + s)  # Sentence(['昨日', '本', 'を', '読んだ'])
+
+    print("chapter 17: iterators and generators")
+    from ETL.extractors.sentence_reader import read_sentences
+    iterator = islice(read_sentences("sentences_test.txt"), 3)
+    for sentence in iterator:
+        print(sentence)
