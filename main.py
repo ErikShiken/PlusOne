@@ -108,3 +108,28 @@ if __name__ == '__main__':
     iterator = islice(read_sentences("sentences_test.txt"), 3)
     for sentence in iterator:
         print(sentence)
+
+    print("sudachipy example")
+    import sys
+
+    print(sys.executable)
+    from sudachipy import Dictionary, SplitMode
+
+    tokenizer = Dictionary().tokenizer()
+
+    morphemes = tokenizer.tokenize("国会議事堂前駅")
+    print(morphemes[0].surface())  # '国会議事堂前駅'
+    print(morphemes[0].reading_form())  # 'コッカイギジドウマエエキ'
+    print(morphemes[0].part_of_speech())  # ['名詞', '固有名詞', '一般', '*', '*', '*']
+
+    morphemes = tokenizer.tokenize("国会議事堂前駅", SplitMode.A)
+    my_first_sentence = [m.surface() for m in morphemes]
+    print(my_first_sentence)  # ['国会', '議事', '堂', '前', '駅']
+
+    morphemes = tokenizer.tokenize("国会議事堂前駅", SplitMode.C)
+    my_first_sentence = [m.surface() for m in morphemes]
+    print(my_first_sentence)
+
+    morphemes = tokenizer.tokenize("私は日本語を勉強した。")
+    simple_sentence = [m.surface() for m in morphemes]
+    print(simple_sentence)
