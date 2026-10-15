@@ -1,10 +1,9 @@
-from collections.abc import Sequence
 
 
 class DifficultyClassifier:
     @staticmethod
-    def classify(unseen: Sequence[str]) -> str:
-        match unseen:
+    def classify(unseen: set[str]) -> str:
+        match list(unseen):
             case []:
                 return "known"
             case [only]:

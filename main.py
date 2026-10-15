@@ -4,6 +4,7 @@ from typing import Iterable, Sequence
 from ETL.loaders.jiten_loader import JitenLoader
 from ETL.models import Sentence
 from ETL.transform.jiten_transformer import JitenTransformer
+from classifier import DifficultyClassifier
 from visitors.japanese.japanese_visitor import JapaneseVisitor
 from visitors.rules.unknown_rule import unknown_rule
 import sqlite3
@@ -69,6 +70,8 @@ if __name__ == '__main__':
     visitor.set_grammar("global_rules.json")
 
     visitor.visit("vocabulary", "食べる")
+    print("classify!")
+    print(DifficultyClassifier.classify(visitor.unknowns))
 
     s = Sentence(["昨日", "買った", "本", "を", "読んだ"])
     print(s)
@@ -133,3 +136,16 @@ if __name__ == '__main__':
     morphemes = tokenizer.tokenize("私は日本語を勉強した。")
     simple_sentence = [m.surface() for m in morphemes]
     print(simple_sentence)
+
+    morphemes = tokenizer.tokenize("私は日本語を勉強した。")
+    dictionary_form = [m.dictionary_form() for m in morphemes]
+    print(dictionary_form)
+
+    new_visitor = JapaneseVisitor.from_file("user_known.dat", unknown_rule)
+    new_visitor.set_grammar("global_rules.json")
+
+    for morpheme in morphemes:
+        if 1548 > morpheme.part_of_speech_id() or morpheme.part_of_speech_id() > 1554:
+            new_visitor.visit("vocabulary", morpheme.dictionary_form())
+
+    print(new_visitor.user_known)
