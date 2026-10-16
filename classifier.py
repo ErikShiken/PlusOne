@@ -4,7 +4,5 @@ class DifficultyClassifier:
         match list(unseen):
             case []:
                 return "known"
-            case [only]:
-                return f"n+1 (new: {only})"
             case [*rest]:
-                return f"n+{len(rest)} (new: {rest})"
+                return f"n+{len(rest)}"

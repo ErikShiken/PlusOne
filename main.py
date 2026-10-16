@@ -54,6 +54,13 @@ if __name__ == '__main__':
                 vocab_id  INTEGER NOT NULL UNIQUE REFERENCES vocabulary(id)
             )
         """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS classified_sentences (
+                id        INTEGER PRIMARY KEY,
+                sentence  TEXT NOT NULL UNIQUE,
+                label     TEXT NOT NULL
+            )
+        """)
 
         rows = JitenExtractor().extract("frequency_list_global.csv")
         entries = (JitenTransformer().transform(row) for row in rows)
@@ -150,13 +157,31 @@ if __name__ == '__main__':
     print(new_visitor.user_known)
     print(DifficultyClassifier.classify(new_visitor.unknowns))
 
-    print("iterator over the sentences_text and classify each one")
+    print("iterate over the sentences_text and classify each one")
     iterator = read_sentences("sentences_test.txt")
     known_words = JapaneseVisitor.read_user_known("user_known.dat")
-    for sentence in iterator:
-        tokens = tokenizer.tokenize(sentence.__str__())
-        dictionary_form = [t.dictionary_form() for t in tokens]
-        sentences_visitor = JapaneseVisitor(known_words)
-        for dt in dictionary_form:
-            sentences_visitor.visit("vocabulary", dt)
-        print(DifficultyClassifier.classify(sentences_visitor.unknowns))
+    conn = sqlite3.connect("plusone.db")
+    try:
+        for sentence in iterator:
+            tokens = tokenizer.tokenize(sentence.__str__())
+            sentences_visitor = JapaneseVisitor(known_words)
+            for t in tokens:
+                if 1548 > t.part_of_speech_id() or t.part_of_speech_id() > 1554:
+                    sentences_visitor.visit("vocabulary", t.dictionary_form())
+
+            label = DifficultyClassifier.classify(sentences_visitor.unknowns)
+            print(label)
+            conn.execute(
+                "INSERT OR IGNORE INTO classified_sentences (sentence, label) VALUES (?, ?)",
+                (str(sentence), str(label)),
+            )
+            conn.commit()
+    finally:
+        conn.close()
+
+    try:
+        conn = sqlite3.connect("plusone.db")
+        for row in conn.execute("SELECT * FROM classified_sentences"):
+            print(row)
+    finally:
+        conn.close()
