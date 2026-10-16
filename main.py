@@ -6,7 +6,6 @@ from ETL.models import Sentence
 from ETL.transform.jiten_transformer import JitenTransformer
 from classifier import DifficultyClassifier
 from visitors.japanese.japanese_visitor import JapaneseVisitor
-from visitors.rules.unknown_rule import unknown_rule
 import sqlite3
 from ETL.extractors.jiten_extractor import JitenExtractor
 
@@ -66,7 +65,7 @@ if __name__ == '__main__':
     finally:
         conn.close()
 
-    visitor = JapaneseVisitor.from_file("user_known.dat", unknown_rule)
+    visitor = JapaneseVisitor.from_file("user_known.dat")
     visitor.set_grammar("global_rules.json")
 
     visitor.visit("vocabulary", "食べる")
@@ -141,7 +140,7 @@ if __name__ == '__main__':
     dictionary_form = [m.dictionary_form() for m in morphemes]
     print(dictionary_form)
 
-    new_visitor = JapaneseVisitor.from_file("user_known.dat", unknown_rule)
+    new_visitor = JapaneseVisitor.from_file("user_known.dat")
     new_visitor.set_grammar("global_rules.json")
 
     for morpheme in morphemes:

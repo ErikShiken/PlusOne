@@ -1,5 +1,3 @@
-
-
 class DifficultyClassifier:
     @staticmethod
     def classify(unseen: set[str]) -> str:
@@ -9,4 +7,4 @@ class DifficultyClassifier:
             case [only]:
                 return f"n+1 (new: {only})"
             case [*rest]:
-                return f"unknown (new: {rest})"
+                return f"n+{len(rest)} (new: {rest})"
