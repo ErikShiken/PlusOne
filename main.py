@@ -148,3 +148,15 @@ if __name__ == '__main__':
             new_visitor.visit("vocabulary", morpheme.dictionary_form())
 
     print(new_visitor.user_known)
+    print(DifficultyClassifier.classify(new_visitor.unknowns))
+
+    print("iterator over the sentences_text and classify each one")
+    iterator = read_sentences("sentences_test.txt")
+    known_words = JapaneseVisitor.read_user_known("user_known.dat")
+    for sentence in iterator:
+        tokens = tokenizer.tokenize(sentence.__str__())
+        dictionary_form = [t.dictionary_form() for t in tokens]
+        sentences_visitor = JapaneseVisitor(known_words)
+        for dt in dictionary_form:
+            sentences_visitor.visit("vocabulary", dt)
+        print(DifficultyClassifier.classify(sentences_visitor.unknowns))
