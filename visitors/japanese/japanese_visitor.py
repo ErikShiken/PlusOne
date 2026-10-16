@@ -8,11 +8,9 @@ from visitors.registry import HANDLERS, handles
 class JapaneseVisitor(SentenceVisitor):
     grammar = None
 
-    UnknownRule = Callable[[set[str]], None]
-    def __init__(self, user_knowns: set[str], unknown_rule: UnknownRule):
+    def __init__(self, user_knowns: set[str]):
         self.unknowns: set[str] = set()
         self.user_known = user_knowns
-        self.unknown_rule = unknown_rule
 
     def visit(self, kind: str, item: str) -> None:
         handler = HANDLERS[kind]
@@ -30,8 +28,6 @@ class JapaneseVisitor(SentenceVisitor):
         if item not in self.user_known:
             self.unknowns.add(item)
 
-        self.unknown_rule(self.unknowns)
-
     @staticmethod
     def read_user_known(user_known_file: str) -> set[str]:
         with open(user_known_file, "r", encoding="utf-8") as f:
@@ -43,5 +39,5 @@ class JapaneseVisitor(SentenceVisitor):
             cls.grammar = MappingProxyType(json.load(f))
 
     @classmethod
-    def from_file(cls, user_known_file: str, unknown_rule: Callable[[set[str]], None]) -> Self:
-        return cls(cls.read_user_known(user_known_file), unknown_rule)
+    def from_file(cls, user_known_file: str) -> Self:
+        return cls(cls.read_user_known(user_known_file))
