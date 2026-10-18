@@ -1,12 +1,9 @@
-import codecs
 from abc import ABC, abstractmethod
-from typing import Iterator
+from typing import TypeVar, Generic
 
+T = TypeVar("T")
 
-class ExtractorBase(ABC):
-    UTF8_BOM = codecs.BOM_UTF8
-    encoding = "utf-8"
-
+class ExtractorBase(ABC, Generic[T]):
     @abstractmethod
-    def extract(self, file_path:str) -> Iterator[dict[str, str]]:
+    def extract(self) -> T:
         pass

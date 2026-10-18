@@ -3,6 +3,7 @@ from typing import Iterable, Sequence
 
 import json
 
+from ETL.extractors.wanikani_extractor import WanikaniExtractor
 from ETL.loaders.jiten_loader import JitenLoader
 from ETL.models import Sentence
 from ETL.transform.jiten_transformer import JitenTransformer
@@ -66,7 +67,8 @@ if __name__ == '__main__':
             )
         """)
 
-        rows = JitenExtractor().extract("frequency_list_global.csv")
+        jiten_extractor = JitenExtractor("frequency_list_global.csv")
+        rows = jiten_extractor.extract()
         entries = (JitenTransformer().transform(row) for row in rows)
         JitenLoader(conn).load(islice(entries, 2500))
         load_known_words(conn, JapaneseVisitor.read_user_known("user_known.dat"))
@@ -190,21 +192,7 @@ if __name__ == '__main__':
     finally:
         conn.close()
 
-    print("requests examples")
-    token = os.environ["WANIKANI_TOKEN"]
-
-    url = "https://api.wanikani.com/v2/assignments?subject_types=vocabulary,kana_vocabulary"
-    headers = {
-            "Wanikani-Revision": "20170710",
-            "Authorization": f"Bearer {token}",
-        }
-
-    subject_table = {}
-    while url is not None:
-        r = requests.get(url, headers=headers)
-        my_data = r.json()['data']
-        subject_table.update({item['data']['subject_id']: item['data']['srs_stage'] for item in my_data})
-        print(len(subject_table))
-        url = r.json()['pages']['next_url']
-
-    print("subject table", subject_table)
+    wani_extractor = WanikaniExtractor()
+    mapping = wani_extractor.extract()
+    print(mapping)
+    print(len(mapping))
