@@ -1,11 +1,15 @@
 import logging
 from typing import Iterable, Sequence
 
+import json
+
 from ETL.loaders.jiten_loader import JitenLoader
 from ETL.models import Sentence
 from ETL.transform.jiten_transformer import JitenTransformer
 from classifier import DifficultyClassifier
 from visitors.japanese.japanese_visitor import JapaneseVisitor
+import os
+import requests
 import sqlite3
 from ETL.extractors.jiten_extractor import JitenExtractor
 
@@ -185,3 +189,22 @@ if __name__ == '__main__':
             print(row)
     finally:
         conn.close()
+
+    print("requests examples")
+    token = os.environ["WANIKANI_TOKEN"]
+
+    url = "https://api.wanikani.com/v2/assignments?subject_types=vocabulary,kana_vocabulary"
+    headers = {
+            "Wanikani-Revision": "20170710",
+            "Authorization": f"Bearer {token}",
+        }
+
+    subject_table = {}
+    while url is not None:
+        r = requests.get(url, headers=headers)
+        my_data = r.json()['data']
+        subject_table.update({item['data']['subject_id']: item['data']['srs_stage'] for item in my_data})
+        print(len(subject_table))
+        url = r.json()['pages']['next_url']
+
+    print("subject table", subject_table)
