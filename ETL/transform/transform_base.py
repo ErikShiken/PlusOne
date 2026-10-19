@@ -1,7 +1,10 @@
 from abc import ABC, abstractmethod
-from ETL.models import WordReading
+from typing import TypeVar, Generic
 
-class TransformBase(ABC):
+In = TypeVar("In")
+Out = TypeVar("Out")
+
+class TransformBase(ABC, Generic[In, Out]):
     @abstractmethod
-    def transform(self, data_row:dict) -> WordReading:
+    def transform(self, data:In) -> Out:
         pass

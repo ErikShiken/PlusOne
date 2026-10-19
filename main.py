@@ -7,6 +7,7 @@ from ETL.extractors.wanikani_extractor import WanikaniExtractor
 from ETL.loaders.jiten_loader import JitenLoader
 from ETL.models import Sentence
 from ETL.transform.jiten_transformer import JitenTransformer
+from ETL.transform.wanikani_transformer import WanikaniTransformer
 from classifier import DifficultyClassifier
 from visitors.japanese.japanese_visitor import JapaneseVisitor
 import os
@@ -196,3 +197,9 @@ if __name__ == '__main__':
     mapping = wani_extractor.extract()
     print(mapping)
     print(len(mapping))
+
+    transform = WanikaniTransformer()
+    actual_words = transform.transform(mapping)
+
+    print("difference = ", len(mapping) - len(actual_words))
+    print(actual_words)

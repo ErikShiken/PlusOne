@@ -29,6 +29,12 @@ class WordReading:
         self.frequency_rank = int(self.frequency_rank)
 
 @dataclass
+class WordUnderstanding:
+    word: str
+    known: bool
+
+
+@dataclass
 class Reading:
     vocab_id: int
     reading: str
