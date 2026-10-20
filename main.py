@@ -42,7 +42,7 @@ if __name__ == '__main__':
         conn.execute("""
             CREATE TABLE IF NOT EXISTS vocabulary (
                 id              INTEGER PRIMARY KEY,
-                word            TEXT NOT NULL,
+                word            TEXT NOT NULL UNIQUE,
                 synonym_id      INTEGER REFERENCES vocabulary(id)
             )
         """)
@@ -51,7 +51,8 @@ if __name__ == '__main__':
                 id        INTEGER PRIMARY KEY,
                 vocab_id  INTEGER NOT NULL REFERENCES vocabulary(id),
                 reading   TEXT NOT NULL,
-                frequency_rank  INTEGER
+                frequency_rank  INTEGER,
+                UNIQUE(vocab_id, reading)
             )
         """)
         conn.execute("""

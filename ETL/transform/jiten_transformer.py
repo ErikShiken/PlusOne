@@ -3,5 +3,5 @@ from ETL.models import WordReading
 
 class JitenTransformer(TransformBase[dict, WordReading]):
     language = "ja"
-    def transform(self, data_row: dict) -> WordReading:
+    def transform(self, data_row: dict[str, str]) -> WordReading:
         return WordReading(word=data_row["Word"], reading=data_row["Form"], frequency_rank=data_row["Rank"])

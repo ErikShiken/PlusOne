@@ -16,8 +16,9 @@ class JitenLoader(LogMixin, LoaderBase):
         super().__init__()
         self.conn = conn
         self.batch_limit = batch_limit
-        self.vocab_sql = "INSERT INTO vocabulary (word) VALUES (?)"
-        self.reading_sql = "INSERT INTO readings (vocab_id, reading, frequency_rank) VALUES (?, ?, ?)"
+        self.vocab_sql = "INSERT OR IGNORE INTO vocabulary (word) VALUES (?)"
+        self.reading_sql = "INSERT OR IGNORE INTO readings (vocab_id, reading, frequency_rank) VALUES (?, ?, ?)"
+        self.find_word = "SELECT id FROM vocabulary WHERE word = ?"
 
     @clock
     def load(self, entries: Iterable[WordReading]) -> None:
@@ -26,8 +27,9 @@ class JitenLoader(LogMixin, LoaderBase):
         batch = []
         for entry in entries:
             if entry.word not in ids:
-                cur = self.conn.execute(self.vocab_sql, (entry.word,))
-                ids[entry.word] = cur.lastrowid
+                unused_cursor = self.conn.execute(self.vocab_sql, (entry.word,))
+                cursor = self.conn.execute(self.find_word, (entry.word,))
+                ids[entry.word] = cursor.fetchone()[0]
             batch.append((ids[entry.word], entry.reading, entry.frequency_rank))
             if len(batch) >= self.batch_limit:
                 self.conn.executemany(self.reading_sql, batch)
