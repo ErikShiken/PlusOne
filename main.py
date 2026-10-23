@@ -1,5 +1,5 @@
 import logging
-from typing import Iterable, Sequence
+from typing import Iterable, Sequence, Counter
 
 import json
 
@@ -72,7 +72,7 @@ if __name__ == '__main__':
         jiten_extractor = JitenExtractor("frequency_list_global.csv")
         rows = jiten_extractor.extract()
         entries = (JitenTransformer().transform(row) for row in rows)
-        JitenLoader(conn).load(islice(entries, 2500))
+        JitenLoader(conn).load(islice(entries, None))
         load_known_words(conn, JapaneseVisitor.read_user_known("user_known.dat"))
 
         print("readings", conn.execute("SELECT COUNT(*) FROM readings").fetchone())
@@ -196,11 +196,20 @@ if __name__ == '__main__':
 
     wani_extractor = WanikaniExtractor()
     mapping = wani_extractor.extract()
-    print(mapping)
+    counts = Counter(mapping.values())
+    print("counts = ", counts)
+    print("Enlightened = ", counts[8])
+    print("Burned = ", counts[9])
     print(len(mapping))
 
     transform = WanikaniTransformer()
     actual_words = transform.transform(mapping)
-
+    print("known words = ", sum(1 for word in actual_words if word.known))
     print("difference = ", len(mapping) - len(actual_words))
-    print(actual_words)
+
+    all_squiggle = sum(1 for word in mapping if "\u301c" in word)
+    known_squiggle = sum(1 for word, stage in mapping.items()
+                         if "\u301c" in word and stage >= 8)
+
+    print("all 〜 words = ", all_squiggle)  # expect 65
+    print("known 〜 words = ", known_squiggle)  # expect 63
