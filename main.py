@@ -65,7 +65,7 @@ if __name__ == '__main__':
             CREATE TABLE IF NOT EXISTS classified_sentences (
                 id        INTEGER PRIMARY KEY,
                 sentence  TEXT NOT NULL UNIQUE,
-                label     TEXT NOT NULL
+                unknown_count     INTEGER NOT NULL
             )
         """)
 
@@ -163,7 +163,7 @@ if __name__ == '__main__':
             new_visitor.visit("vocabulary", morpheme.dictionary_form())
 
     print(new_visitor.user_known)
-    print(DifficultyClassifier.classify(new_visitor.unknowns))
+    print(f"n+{DifficultyClassifier.classify(new_visitor.unknowns)}")
 
     print("iterate over the sentences_text and classify each one")
     iterator = read_sentences("sentences_test.txt")
@@ -177,16 +177,25 @@ if __name__ == '__main__':
                 if 1548 > t.part_of_speech_id() or t.part_of_speech_id() > 1554:
                     sentences_visitor.visit("vocabulary", t.dictionary_form())
 
-            label = DifficultyClassifier.classify(sentences_visitor.unknowns)
-            print(label)
+            unknown_count = DifficultyClassifier.classify(sentences_visitor.unknowns)
+            print(f"n+{unknown_count}")
             conn.execute(
-                "INSERT OR IGNORE INTO classified_sentences (sentence, label) VALUES (?, ?)",
-                (str(sentence), str(label)),
+                "INSERT OR IGNORE INTO classified_sentences (sentence, unknown_count) VALUES (?, ?)",
+                (str(sentence), unknown_count),
             )
             conn.commit()
     finally:
         conn.close()
 
+    print("sorting sentences in ascending order based on n+x difficulty")
+    try:
+        conn = sqlite3.connect("plusone.db")
+        for sentence in conn.execute("SELECT * FROM classified_sentences ORDER BY unknown_count"):
+            print(sentence)
+    finally:
+        conn.close()
+
+    print("sorting sentences in no order based on n+x difficulty")
     try:
         conn = sqlite3.connect("plusone.db")
         for row in conn.execute("SELECT * FROM classified_sentences"):
