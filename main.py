@@ -177,9 +177,18 @@ if __name__ == '__main__':
     finally:
         conn.close()
 
-    all_squiggle = sum(1 for word in mapping if "\u301c" in word)
-    known_squiggle = sum(1 for word, stage in mapping.items()
-                         if "\u301c" in word and stage >= 8)
+    try:
+        conn = sqlite3.connect("plusone.db")
+        rows = conn.execute("""
+            SELECT vocabulary.word
+            FROM known_words
+            JOIN vocabulary ON vocabulary.id = known_words.vocab_id
+        """).fetchall()
+    finally:
+        conn.close()
 
-    print("all 〜 words = ", all_squiggle)  # expect 65
-    print("known 〜 words = ", known_squiggle)  # expect 63
+    print(rows)
+    my_words = {this_row[0] for this_row in rows}
+    print("just the words")
+    print(f"wanikani says i know {len(my_words)} words")
+    print(my_words)
