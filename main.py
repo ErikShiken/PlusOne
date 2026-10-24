@@ -1,4 +1,5 @@
 import logging
+import re
 from typing import Iterable, Sequence, Counter
 
 import json
@@ -19,6 +20,11 @@ from itertools import islice
 
 logging.basicConfig(level=logging.DEBUG)
 
+PUNCTUATION = re.compile(r"[、。「」『』！？・]+")
+
+def is_punctuation(token: str) -> bool:
+    return bool(PUNCTUATION.fullmatch(token))
+
 def find_vocab_id(conn: sqlite3.Connection, word: str) -> int | None:
     row = conn.execute(
         "SELECT id FROM vocabulary WHERE word = ?", (word,)
@@ -35,7 +41,23 @@ def load_known_words(conn: sqlite3.Connection, words: Iterable[str]) -> None:
         )
     conn.commit()
 
+def is_katakana_only(word: str) -> bool:
+    punctuation_class = "[、。「」『』！？・]"
+    if re.search(rf"{punctuation_class}+", word):
+        return False
+    elif not word:
+        return False
+
+    return bool(re.fullmatch(r"[\u30a0-\u30ff]+", word))
+
 if __name__ == '__main__':
+
+    print("lab 18.2")
+    test_cases = ["ネコ", "ねこ", "・"]
+    for test_case in test_cases:
+        print("test case =", test_case)
+        print("is katakana only = ", is_katakana_only(test_case))
+
     conn = sqlite3.connect("plusone.db")
     try:
         conn.execute("PRAGMA foreign_keys = ON")
@@ -159,8 +181,12 @@ if __name__ == '__main__':
     new_visitor.set_grammar("global_rules.json")
 
     for morpheme in morphemes:
-        if 1548 > morpheme.part_of_speech_id() or morpheme.part_of_speech_id() > 1554:
-            new_visitor.visit("vocabulary", morpheme.dictionary_form())
+        dictionary_form = morpheme.dictionary_form()
+        if not is_punctuation(dictionary_form):
+            print("adding ", dictionary_form)
+            new_visitor.visit("vocabulary", dictionary_form)
+        else:
+            print("skipping ", dictionary_form)
 
     print(new_visitor.user_known)
     print(f"n+{DifficultyClassifier.classify(new_visitor.unknowns)}")
@@ -174,8 +200,12 @@ if __name__ == '__main__':
             tokens = tokenizer.tokenize(sentence.__str__())
             sentences_visitor = JapaneseVisitor(known_words)
             for t in tokens:
-                if 1548 > t.part_of_speech_id() or t.part_of_speech_id() > 1554:
-                    sentences_visitor.visit("vocabulary", t.dictionary_form())
+                dictionary_form = t.dictionary_form()
+                if not is_punctuation(dictionary_form):
+                    print("adding ", dictionary_form)
+                    sentences_visitor.visit("vocabulary", dictionary_form)
+                else:
+                    print("skipping ", dictionary_form)
 
             unknown_count = DifficultyClassifier.classify(sentences_visitor.unknowns)
             print(f"n+{unknown_count}")
