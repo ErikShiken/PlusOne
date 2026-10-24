@@ -1,8 +1,6 @@
 import logging
-import re
-from typing import Iterator, Iterable, Sequence, Counter
 
-import json
+from typing import Iterator, Iterable, Counter
 
 from ETL.extractors.wanikani_extractor import WanikaniExtractor
 from ETL.loaders.jiten_loader import JitenLoader
@@ -14,16 +12,12 @@ from visitors.japanese.japanese_visitor import JapaneseVisitor
 import os
 import requests
 import sqlite3
+from sudachipy import Dictionary
 from ETL.extractors.jiten_extractor import JitenExtractor
 
 from itertools import islice
 
 logging.basicConfig(level=logging.DEBUG)
-
-PUNCTUATION = re.compile(r"[、。「」『』！？・]+")
-
-def is_punctuation(token: str) -> bool:
-    return bool(PUNCTUATION.fullmatch(token))
 
 def find_vocab_id(conn: sqlite3.Connection, word: str) -> int | None:
     row = conn.execute(
@@ -165,3 +159,14 @@ if __name__ == '__main__':
     print("just the words")
     print(f"wanikani says i know {len(my_words)} words")
     print(my_words)
+
+    japanese_understanding = JapaneseVisitor(my_words)
+    JapaneseVisitor.set_grammar("global_rules.json")
+    tokenizer = Dictionary().tokenizer()
+    for sentence in read_sentences("sentences_test.txt"):
+        morphemes = tokenizer.tokenize(sentence.__str__())
+
+        print("Classify!")
+        unknowns = japanese_understanding.get_unknowns([word.dictionary_form() for word in morphemes])
+        print(f"unknowns = {unknowns}")
+        print(f"n+{DifficultyClassifier.classify(unknowns)}")
