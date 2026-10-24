@@ -97,39 +97,6 @@ if __name__ == '__main__':
     finally:
         conn.close()
 
-    visitor = JapaneseVisitor.from_file("user_known.dat")
-    visitor.set_grammar("global_rules.json")
-
-    visitor.visit("vocabulary", "食べる")
-    print("classify!")
-    print(DifficultyClassifier.classify(visitor.unknowns))
-
-    s = Sentence(["昨日", "買った", "本", "を", "読んだ"])
-    print(s)
-    print(len(s))
-    print(s[1:3])
-    print(s[-1])
-    print("を" in s)
-
-    a = Sentence(["本", "を", "読んだ"])
-    b = Sentence(["本", "を", "読んだ"])
-    print(a == b)  # True
-    print(a == ["本"])
-
-    a = Sentence(["本", "を", "読んだ"])
-    b = Sentence(["本", "を", "読んだ"])
-    c = Sentence(["猫", "が", "寝て", "いる"])
-
-    print(hash(a) == hash(b))  # True: same words, same hash
-    print(len({a, b, c}))  # 2: the set dropped the duplicate
-
-    s = Sentence(["昨日", "買った", "本", "を", "読んだ"])
-    print("Sequence examples: chapter 13")
-    print(s.index("本"))  # 2
-    print(s.count("を"))  # 1
-    print(list(reversed(s)))  # ['読んだ', 'を', '本', '買った', '昨日']
-    print(isinstance(s, Sequence))  # True
-
     print("Chatper 14: mixins")
     print(JitenLoader.__mro__)
 
@@ -171,46 +138,6 @@ if __name__ == '__main__':
     morphemes = tokenizer.tokenize("私は日本語を勉強した。")
     dictionary_form = [m.dictionary_form() for m in morphemes]
     print(dictionary_form)
-
-    new_visitor = JapaneseVisitor.from_file("user_known.dat")
-    new_visitor.set_grammar("global_rules.json")
-
-    for morpheme in morphemes:
-        dictionary_form = morpheme.dictionary_form()
-        if not is_punctuation(dictionary_form):
-            print("adding ", dictionary_form)
-            new_visitor.visit("vocabulary", dictionary_form)
-        else:
-            print("skipping ", dictionary_form)
-
-    print(new_visitor.user_known)
-    print(f"n+{DifficultyClassifier.classify(new_visitor.unknowns)}")
-
-    print("iterate over the sentences_text and classify each one")
-    iterator = read_sentences("sentences_test.txt")
-    known_words = JapaneseVisitor.read_user_known("user_known.dat")
-    conn = sqlite3.connect("plusone.db")
-    try:
-        for sentence in iterator:
-            tokens = tokenizer.tokenize(sentence.__str__())
-            sentences_visitor = JapaneseVisitor(known_words)
-            for t in tokens:
-                dictionary_form = t.dictionary_form()
-                if not is_punctuation(dictionary_form):
-                    print("adding ", dictionary_form)
-                    sentences_visitor.visit("vocabulary", dictionary_form)
-                else:
-                    print("skipping ", dictionary_form)
-
-            unknown_count = DifficultyClassifier.classify(sentences_visitor.unknowns)
-            print(f"n+{unknown_count}")
-            conn.execute(
-                "INSERT OR IGNORE INTO classified_sentences (sentence, unknown_count) VALUES (?, ?)",
-                (str(sentence), unknown_count),
-            )
-            conn.commit()
-    finally:
-        conn.close()
 
     print("sorting sentences in ascending order based on n+x difficulty")
     try:
