@@ -53,6 +53,19 @@ def is_katakana_only(word: str) -> bool:
 def get_known_strings(words: Iterable[WordUnderstanding]) -> Iterator[str]:
     return (w.word for w in words if w.known)
 
+def query_known_words() -> set[str]:
+    try:
+        conn = sqlite3.connect("plusone.db")
+        rows = conn.execute("""
+            SELECT vocabulary.word
+            FROM known_words
+            JOIN vocabulary ON vocabulary.id = known_words.vocab_id
+        """).fetchall()
+    finally:
+        conn.close()
+
+    return {this_row[0] for this_row in rows}
+
 if __name__ == '__main__':
     conn = sqlite3.connect("plusone.db")
     try:
@@ -148,18 +161,7 @@ if __name__ == '__main__':
     finally:
         conn.close()
 
-    try:
-        conn = sqlite3.connect("plusone.db")
-        rows = conn.execute("""
-            SELECT vocabulary.word
-            FROM known_words
-            JOIN vocabulary ON vocabulary.id = known_words.vocab_id
-        """).fetchall()
-    finally:
-        conn.close()
-
-    print(rows)
-    my_words = {this_row[0] for this_row in rows}
+    my_words = query_known_words()
     print("just the words")
     print(f"wanikani says i know {len(my_words)} words")
     print(my_words)
