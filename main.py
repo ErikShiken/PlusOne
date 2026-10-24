@@ -1,12 +1,12 @@
 import logging
 import re
-from typing import Iterable, Sequence, Counter
+from typing import Iterator, Iterable, Sequence, Counter
 
 import json
 
 from ETL.extractors.wanikani_extractor import WanikaniExtractor
 from ETL.loaders.jiten_loader import JitenLoader
-from ETL.models import Sentence
+from ETL.models import Sentence, WordUnderstanding
 from ETL.transform.jiten_transformer import JitenTransformer
 from ETL.transform.wanikani_transformer import WanikaniTransformer
 from classifier import DifficultyClassifier
@@ -50,14 +50,10 @@ def is_katakana_only(word: str) -> bool:
 
     return bool(re.fullmatch(r"[\u30a0-\u30ff]+", word))
 
+def get_known_strings(words: Iterable[WordUnderstanding]) -> Iterator[str]:
+    return (w.word for w in words if w.known)
+
 if __name__ == '__main__':
-
-    print("lab 18.2")
-    test_cases = ["ネコ", "ねこ", "・"]
-    for test_case in test_cases:
-        print("test case =", test_case)
-        print("is katakana only = ", is_katakana_only(test_case))
-
     conn = sqlite3.connect("plusone.db")
     try:
         conn.execute("PRAGMA foreign_keys = ON")
@@ -95,7 +91,6 @@ if __name__ == '__main__':
         rows = jiten_extractor.extract()
         entries = (JitenTransformer().transform(row) for row in rows)
         JitenLoader(conn).load(islice(entries, None))
-        load_known_words(conn, JapaneseVisitor.read_user_known("user_known.dat"))
 
         print("readings", conn.execute("SELECT COUNT(*) FROM readings").fetchone())
         print("vocabulary", conn.execute("SELECT COUNT(*) FROM vocabulary").fetchone())
@@ -245,6 +240,15 @@ if __name__ == '__main__':
     actual_words = transform.transform(mapping)
     print("known words = ", sum(1 for word in actual_words if word.known))
     print("difference = ", len(mapping) - len(actual_words))
+
+    try:
+        conn = sqlite3.connect("plusone.db")
+        load_known_words(conn, get_known_strings(actual_words))
+        count_in_db = conn.execute("SELECT COUNT(*) FROM known_words").fetchone()
+        print("number of known words in DB = ", count_in_db)
+        print("difference is ", len(actual_words) - count_in_db[0])
+    finally:
+        conn.close()
 
     all_squiggle = sum(1 for word in mapping if "\u301c" in word)
     known_squiggle = sum(1 for word, stage in mapping.items()
