@@ -2,6 +2,7 @@ import logging
 
 from typing import Iterator, Iterable, Counter
 
+from contextlib import contextmanager
 from ETL.extractors.wanikani_extractor import WanikaniExtractor
 from ETL.loaders.jiten_loader import JitenLoader
 from ETL.models import Sentence, WordUnderstanding
@@ -10,7 +11,7 @@ from ETL.transform.wanikani_transformer import WanikaniTransformer
 from classifier import DifficultyClassifier
 from visitors.japanese.japanese_visitor import JapaneseVisitor
 import os
-import requests
+import re
 import sqlite3
 from sudachipy import Dictionary
 from ETL.extractors.jiten_extractor import JitenExtractor
@@ -18,6 +19,18 @@ from ETL.extractors.jiten_extractor import JitenExtractor
 from itertools import islice
 
 logging.basicConfig(level=logging.DEBUG)
+
+@contextmanager
+def open_db(name):
+    connection = sqlite3.connect(name)
+    try:
+        yield connection
+        connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        connection.close()
 
 def find_vocab_id(conn: sqlite3.Connection, word: str) -> int | None:
     row = conn.execute(
@@ -33,7 +46,6 @@ def load_known_words(conn: sqlite3.Connection, words: Iterable[str]) -> None:
         conn.execute(
             "INSERT OR IGNORE INTO known_words (vocab_id) VALUES (?)", (vocab_id,)
         )
-    conn.commit()
 
 def is_katakana_only(word: str) -> bool:
     punctuation_class = "[、。「」『』！？・]"
@@ -48,21 +60,16 @@ def get_known_strings(words: Iterable[WordUnderstanding]) -> Iterator[str]:
     return (w.word for w in words if w.known)
 
 def query_known_words() -> set[str]:
-    try:
-        conn = sqlite3.connect("plusone.db")
+    with open_db("plusone.db") as conn:
         rows = conn.execute("""
-            SELECT vocabulary.word
-            FROM known_words
-            JOIN vocabulary ON vocabulary.id = known_words.vocab_id
-        """).fetchall()
-    finally:
-        conn.close()
-
-    return {this_row[0] for this_row in rows}
+                    SELECT vocabulary.word
+                    FROM known_words
+                    JOIN vocabulary ON vocabulary.id = known_words.vocab_id
+                """).fetchall()
+    return {row[0] for row in rows}
 
 if __name__ == '__main__':
-    conn = sqlite3.connect("plusone.db")
-    try:
+    with open_db("plusone.db") as conn:
         conn.execute("PRAGMA foreign_keys = ON")
         conn.execute("""
             CREATE TABLE IF NOT EXISTS vocabulary (
@@ -101,8 +108,6 @@ if __name__ == '__main__':
 
         print("readings", conn.execute("SELECT COUNT(*) FROM readings").fetchone())
         print("vocabulary", conn.execute("SELECT COUNT(*) FROM vocabulary").fetchone())
-    finally:
-        conn.close()
 
     print("Chatper 14: mixins")
     print(JitenLoader.__mro__)
@@ -118,20 +123,14 @@ if __name__ == '__main__':
         print(sentence)
 
     print("sorting sentences in ascending order based on n+x difficulty")
-    try:
-        conn = sqlite3.connect("plusone.db")
+    with open_db("plusone.db") as conn:
         for sentence in conn.execute("SELECT * FROM classified_sentences ORDER BY unknown_count"):
             print(sentence)
-    finally:
-        conn.close()
 
     print("sorting sentences in no order based on n+x difficulty")
-    try:
-        conn = sqlite3.connect("plusone.db")
+    with open_db("plusone.db") as conn:
         for row in conn.execute("SELECT * FROM classified_sentences"):
             print(row)
-    finally:
-        conn.close()
 
     wani_extractor = WanikaniExtractor()
     mapping = wani_extractor.extract()
@@ -146,20 +145,13 @@ if __name__ == '__main__':
     print("known words = ", sum(1 for word in actual_words if word.known))
     print("difference = ", len(mapping) - len(actual_words))
 
-    try:
-        conn = sqlite3.connect("plusone.db")
+    with open_db("plusone.db") as conn:
         load_known_words(conn, get_known_strings(actual_words))
         count_in_db = conn.execute("SELECT COUNT(*) FROM known_words").fetchone()
         print("number of known words in DB = ", count_in_db)
         print("difference is ", len(actual_words) - count_in_db[0])
-    finally:
-        conn.close()
 
     my_words = query_known_words()
-    print("just the words")
-    print(f"wanikani says i know {len(my_words)} words")
-    print(my_words)
-
     japanese_understanding = JapaneseVisitor(my_words)
     JapaneseVisitor.set_grammar("global_rules.json")
     tokenizer = Dictionary().tokenizer()
@@ -167,6 +159,13 @@ if __name__ == '__main__':
         morphemes = tokenizer.tokenize(sentence.__str__())
 
         print("Classify!")
-        unknowns = japanese_understanding.get_unknowns([word.dictionary_form() for word in morphemes])
+        unknown_words = []
+        for word in morphemes:
+            match word.part_of_speech():
+                case ('助詞', *_):
+                    print("surface", word.surface())
+
+            unknown_words.append(word.dictionary_form())
+        unknowns = japanese_understanding.get_unknowns(unknown_words)
         print(f"unknowns = {unknowns}")
         print(f"n+{DifficultyClassifier.classify(unknowns)}")

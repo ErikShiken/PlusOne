@@ -32,8 +32,12 @@ class WanikaniExtractor(ExtractorBase[Mapping[str, str]]):
         data = {}
         while url is not None:
             r = requests.get(url, headers=self.headers)
-            response = r.json()['data']
-            data.update({pair_func(item) for item in response})
-            url = r.json()['pages']['next_url']
+            match r.json():
+                case {"data": items, "pages": {"next_url": url}}:
+                    data.update({pair_func(item) for item in items})
+                case {"error": message, "code": code}:
+                    raise RuntimeError(f"Wanikani API error: {message}, code: {code}")
+                case _:
+                    raise RuntimeError(f"unexpected reply: {r.json()}")
 
         return data
