@@ -100,6 +100,18 @@ if __name__ == '__main__':
                 unknown_count     INTEGER NOT NULL
             )
         """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS wk_subjects_cache (
+                subject_id        INTEGER PRIMARY KEY,
+                characters  TEXT NOT NULL
+            )
+        """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS wk_assignments_cache (
+                subject_id        INTEGER PRIMARY KEY,
+                srs_state  INTEGER NOT NULL
+            )
+        """)
 
         jiten_extractor = JitenExtractor("frequency_list_global.csv")
         rows = jiten_extractor.extract()
@@ -133,6 +145,23 @@ if __name__ == '__main__':
             print(row)
 
     wani_extractor = WanikaniExtractor()
+    subjects = wani_extractor.extract_subjects()
+    with open_db("plusone.db") as conn:
+        conn.executemany(
+            "INSERT OR REPLACE INTO wk_subjects_cache (subject_id, characters) VALUES (?, ?)",
+            subjects.items(),
+        )
+        print(conn.execute("SELECT COUNT(*) FROM wk_subjects_cache").fetchone())
+
+    assignments = wani_extractor.extract_assignments()
+    print(list(assignments.items())[:3])
+    with open_db("plusone.db") as conn:
+        conn.executemany(
+            "INSERT OR REPLACE INTO wk_assignments_cache (subject_id, srs_state) VALUES (?, ?)",
+            assignments.items(),
+        )
+        print(conn.execute("SELECT COUNT(*) FROM wk_assignments_cache").fetchone())
+    exit()
     mapping = wani_extractor.extract()
     counts = Counter(mapping.values())
     print("counts = ", counts)

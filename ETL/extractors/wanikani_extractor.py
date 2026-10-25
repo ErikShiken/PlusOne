@@ -20,6 +20,12 @@ class WanikaniExtractor(ExtractorBase[Mapping[str, str]]):
         mapping_table = self._get_data(self.subjects_web_query, self._subject_pair)
         return {mapping_table[subject_id]: stage for subject_id, stage in subject_table.items()}
 
+    def extract_subjects(self) -> Mapping[str, str]:
+        return self._get_data(self.subjects_web_query, self._subject_pair)
+
+    def extract_assignments(self) -> Mapping[str, str]:
+        return self._get_data(self.assignments_url, self._assignment_pair)
+
     @staticmethod
     def _assignment_pair(item):
         return item['data']['subject_id'], item['data']['srs_stage']
