@@ -155,6 +155,7 @@ if __name__ == '__main__':
     japanese_understanding = JapaneseVisitor(my_words)
     JapaneseVisitor.set_grammar("global_rules.json")
     tokenizer = Dictionary().tokenizer()
+    j2e_parts_of_speech = {'助詞': 'particle', '助動詞': 'auxiliary'}
     for sentence in read_sentences("sentences_test.txt"):
         morphemes = tokenizer.tokenize(sentence.__str__())
 
@@ -162,8 +163,8 @@ if __name__ == '__main__':
         unknown_words = []
         for word in morphemes:
             match word.part_of_speech():
-                case ('助詞', *_):
-                    print("surface", word.surface())
+                case (('助詞' | '助動詞') as part_of_speech, *_):
+                    print(j2e_parts_of_speech[part_of_speech], word.surface())
 
             unknown_words.append(word.dictionary_form())
         unknowns = japanese_understanding.get_unknowns(unknown_words)
