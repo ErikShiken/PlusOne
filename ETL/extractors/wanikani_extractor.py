@@ -34,16 +34,19 @@ class WanikaniExtractor(ExtractorBase[Mapping[str, str]]):
     def _subject_pair(item):
         return item['id'], item['data']['characters']
 
-    def _get_data(self, url: str, pair_func : Callable[[dict], tuple[str, str]]) -> Mapping[str, str]:
+    def _get_data(self, url: str, pair_func : Callable[[dict], tuple[str, str]]) -> tuple[Mapping[str, str], str | None]:
         data = {}
+        last_update = None
         while url is not None:
             r = requests.get(url, headers=self.headers)
             match r.json():
                 case {"data": items, "pages": {"next_url": url}}:
+                    if not last_update:
+                        last_update = r.json()["data_updated_at"]
                     data.update({pair_func(item) for item in items})
                 case {"error": message, "code": code}:
                     raise RuntimeError(f"Wanikani API error: {message}, code: {code}")
                 case _:
                     raise RuntimeError(f"unexpected reply: {r.json()}")
 
-        return data
+        return data, last_update

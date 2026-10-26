@@ -112,6 +112,12 @@ if __name__ == '__main__':
                 srs_state  INTEGER NOT NULL
             )
         """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS update_times (
+                endpoint        TEXT PRIMARY KEY,
+                last_synced  TEXT NOT NULL
+            )
+        """)
 
         jiten_extractor = JitenExtractor("frequency_list_global.csv")
         rows = jiten_extractor.extract()
