@@ -47,6 +47,11 @@ def load_known_words(conn: sqlite3.Connection, words: Iterable[str]) -> None:
             "INSERT OR IGNORE INTO known_words (vocab_id) VALUES (?)", (vocab_id,)
         )
 
+def update_times(conn: sqlite3.Connection, endpoint: str, last_synced: str) -> None:
+    conn.execute(
+        "INSERT OR REPLACE INTO update_times (endpoint, last_synced) VALUES (?, ?)", (endpoint, last_synced)
+    )
+
 def is_katakana_only(word: str) -> bool:
     punctuation_class = "[、。「」『』！？・]"
     if re.search(rf"{punctuation_class}+", word):
@@ -150,23 +155,44 @@ if __name__ == '__main__':
         for row in conn.execute("SELECT * FROM classified_sentences"):
             print(row)
 
-    wani_extractor = WanikaniExtractor()
-    subjects = wani_extractor.extract_subjects()
     with open_db("plusone.db") as conn:
-        conn.executemany(
-            "INSERT OR REPLACE INTO wk_subjects_cache (subject_id, characters) VALUES (?, ?)",
-            subjects.items(),
-        )
-        print(conn.execute("SELECT COUNT(*) FROM wk_subjects_cache").fetchone())
+        subject_update_time = conn.execute("SELECT last_synced FROM update_times WHERE endpoint = 'subjects'").fetchone()
+        if subject_update_time:
+            subject_update_time = subject_update_time[0]
+        print("subject update time ", subject_update_time)
+        assignment_update_time = conn.execute(
+            "SELECT last_synced FROM update_times WHERE endpoint = 'assignments'").fetchone()
+        if assignment_update_time:
+            assignment_update_time = assignment_update_time[0]
+        print("assignment update time ", assignment_update_time)
 
-    assignments = wani_extractor.extract_assignments()
+    wani_extractor = WanikaniExtractor(last_subject_update_time=subject_update_time, last_assignment_update_time=assignment_update_time)
+    subjects, subject_update_time = wani_extractor.extract_subjects()
+    print("subject update time ", subject_update_time)
+    if subject_update_time:
+        with open_db("plusone.db") as conn:
+            conn.executemany(
+                "INSERT OR REPLACE INTO wk_subjects_cache (subject_id, characters) VALUES (?, ?)",
+                subjects.items(),
+            )
+            update_times(conn, "subjects", subject_update_time)
+            print(conn.execute("SELECT COUNT(*) FROM wk_subjects_cache").fetchone())
+
+    assignments, assignments_update_time = wani_extractor.extract_assignments()
+    print("assignments update time ", assignments_update_time)
+
     print(list(assignments.items())[:3])
+    if assignments_update_time:
+        with open_db("plusone.db") as conn:
+            conn.executemany(
+                "INSERT OR REPLACE INTO wk_assignments_cache (subject_id, srs_state) VALUES (?, ?)",
+                assignments.items(),
+            )
+            update_times(conn, "assignments", assignments_update_time)
+            print(conn.execute("SELECT COUNT(*) FROM wk_assignments_cache").fetchone())
+
     with open_db("plusone.db") as conn:
-        conn.executemany(
-            "INSERT OR REPLACE INTO wk_assignments_cache (subject_id, srs_state) VALUES (?, ?)",
-            assignments.items(),
-        )
-        print(conn.execute("SELECT COUNT(*) FROM wk_assignments_cache").fetchone())
+        print(conn.execute("SELECT * FROM update_times").fetchall())
     exit()
     mapping = wani_extractor.extract()
     counts = Counter(mapping.values())

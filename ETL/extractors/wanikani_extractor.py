@@ -6,25 +6,28 @@ import requests
 
 class WanikaniExtractor(ExtractorBase[Mapping[str, str]]):
     language = "ja"
+    update_filter = "&updated_after="
     assignments_url = "https://api.wanikani.com/v2/assignments?subject_types=vocabulary,kana_vocabulary"
     subjects_web_query = "https://api.wanikani.com/v2/subjects?types=vocabulary,kana_vocabulary"
-    def __init__(self):
+    def __init__(self, last_assignment_update_time: str | None = None, last_subject_update_time: str | None = None):
         self.token = os.environ["WANIKANI_TOKEN"]
         self.headers = {
             "Wanikani-Revision": "20170710",
             "Authorization": f"Bearer {self.token}",
         }
+        self.last_assignment_update_time = last_assignment_update_time
+        self.last_subject_update_time = last_subject_update_time
 
     def extract(self) -> Mapping[str, str]:
-        subject_table = self._get_data(self.assignments_url, self._assignment_pair)
-        mapping_table = self._get_data(self.subjects_web_query, self._subject_pair)
+        subject_table, subject_update_time = self._get_data(self.assignments_url, self._assignment_pair, self.last_assignment_update_time)
+        mapping_table, mapping_update_time = self._get_data(self.subjects_web_query, self._subject_pair, self.last_subject_update_time)
         return {mapping_table[subject_id]: stage for subject_id, stage in subject_table.items()}
 
-    def extract_subjects(self) -> Mapping[str, str]:
-        return self._get_data(self.subjects_web_query, self._subject_pair)
+    def extract_subjects(self) -> tuple[Mapping[str, str], str | None]:
+        return self._get_data(self.subjects_web_query, self._subject_pair, self.last_subject_update_time)
 
-    def extract_assignments(self) -> Mapping[str, str]:
-        return self._get_data(self.assignments_url, self._assignment_pair)
+    def extract_assignments(self) -> tuple[Mapping[str, str], str | None]:
+        return self._get_data(self.assignments_url, self._assignment_pair, self.last_assignment_update_time)
 
     @staticmethod
     def _assignment_pair(item):
@@ -34,9 +37,16 @@ class WanikaniExtractor(ExtractorBase[Mapping[str, str]]):
     def _subject_pair(item):
         return item['id'], item['data']['characters']
 
-    def _get_data(self, url: str, pair_func : Callable[[dict], tuple[str, str]]) -> tuple[Mapping[str, str], str | None]:
+    def _get_data(self, url: str, pair_func : Callable[[dict], tuple[str, str]], last_update_time: str | None) -> tuple[Mapping[str, str], str | None]:
         data = {}
         last_update = None
+        this_update_filter = None
+        if last_update_time:
+            this_update_filter = self.update_filter + last_update_time
+
+        if last_update_time and url:
+            url += this_update_filter
+
         while url is not None:
             r = requests.get(url, headers=self.headers)
             match r.json():
