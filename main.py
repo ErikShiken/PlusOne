@@ -73,6 +73,16 @@ def query_known_words() -> set[str]:
                 """).fetchall()
     return {row[0] for row in rows}
 
+def get_srs_mapping() -> dict[str, str]:
+    with open_db("plusone.db") as conn:
+        rows = conn.execute("""
+            SELECT characters, srs_state
+            FROM wk_subjects_cache
+            JOIN wk_assignments_cache ON wk_subjects_cache.subject_id = wk_assignments_cache.subject_id
+        """).fetchall()
+    return {row[0]: row[1] for row in rows}
+
+
 if __name__ == '__main__':
     with open_db("plusone.db") as conn:
         conn.execute("PRAGMA foreign_keys = ON")
@@ -181,7 +191,6 @@ if __name__ == '__main__':
     assignments, assignments_update_time = wani_extractor.extract_assignments()
     print("assignments update time ", assignments_update_time)
 
-    print(list(assignments.items())[:3])
     if assignments_update_time:
         with open_db("plusone.db") as conn:
             conn.executemany(
@@ -193,18 +202,10 @@ if __name__ == '__main__':
 
     with open_db("plusone.db") as conn:
         print(conn.execute("SELECT * FROM update_times").fetchall())
-    exit()
-    mapping = wani_extractor.extract()
-    counts = Counter(mapping.values())
-    print("counts = ", counts)
-    print("Enlightened = ", counts[8])
-    print("Burned = ", counts[9])
-    print(len(mapping))
 
+    mapping = get_srs_mapping()
     transform = WanikaniTransformer()
     actual_words = transform.transform(mapping)
-    print("known words = ", sum(1 for word in actual_words if word.known))
-    print("difference = ", len(mapping) - len(actual_words))
 
     with open_db("plusone.db") as conn:
         load_known_words(conn, get_known_strings(actual_words))
