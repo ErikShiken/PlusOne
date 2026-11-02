@@ -1,3 +1,4 @@
+import bz2
 import logging
 import time
 import urllib.request
@@ -45,22 +46,26 @@ class TatoebaExtractor(ExtractorBase[Mapping[str, str]]):
 
     def extract(self) -> Mapping[Path, str]:
         if not _DOWNLOADED_FILE_PATH.is_file():
-            remaining = self._crawl_delay - (time.monotonic() - self._last_request)
-            if remaining > 0:
-                time.sleep(remaining)
-            req = urllib.request.Request(_DOWNLOAD_URL + _TARGET, headers=_CRAWLER_HEADER)
-            response = urllib.request.urlopen(req)
-            self._last_request = time.monotonic()
-            _DOWNLOADED_FILE_PATH.parent.mkdir(parents=True, exist_ok=True)
-            with open(_DOWNLOADED_FILE_PATH, "wb") as file:
-                file.write(response.read())
-            status = {_DOWNLOADED_FILE_PATH : "success"}
-        else:
-            status = {_DOWNLOADED_FILE_PATH : f"file @ {_DOWNLOADED_FILE_PATH}"}
-        return status
+            self._download_file()
+
+        with bz2.open(_DOWNLOADED_FILE_PATH, "rb") as file:
+            data = file.read()
+
+        return {Path(_DOWNLOADED_FILE_PATH): data.decode('utf-8')}
+
+    def _download_file(self):
+        remaining = self._crawl_delay - (time.monotonic() - self._last_request)
+        if remaining > 0:
+            time.sleep(remaining)
+        req = urllib.request.Request(_DOWNLOAD_URL + _TARGET, headers=_CRAWLER_HEADER)
+        response = urllib.request.urlopen(req)
+        self._last_request = time.monotonic()
+        _DOWNLOADED_FILE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with open(_DOWNLOADED_FILE_PATH, "wb") as file:
+            file.write(response.read())
 
 if __name__ == '__main__':
     tatoeba_extractor = TatoebaExtractor()
-    download_status = tatoeba_extractor.extract()
-    print("download_status ", download_status)
+    contents = tatoeba_extractor.extract()
+    print("contents ", contents)
 
