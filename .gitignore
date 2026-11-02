@@ -1,5 +1,5 @@
 .idea/*
 __pycache__
 *.db
-ETL/extractors/data/*
+data/*
 labs/*
