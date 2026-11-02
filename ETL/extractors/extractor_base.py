@@ -4,16 +4,13 @@ from typing import TypeVar, Generic
 
 T = TypeVar("T")
 
-@contextmanager
 class ExtractorBase(ABC, Generic[T]):
     @abstractmethod
     def extract(self) -> T:
         pass
 
-    @abstractmethod
     def __enter__(self):
-        pass
+        return self
 
-    @abstractmethod
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
