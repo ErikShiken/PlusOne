@@ -3,6 +3,8 @@ import logging
 from typing import Iterator, Iterable, Counter
 
 from contextlib import contextmanager
+
+from ETL.extractors.tatoeba_extractor import TatoebaExtractor
 from ETL.extractors.wanikani_extractor import WanikaniExtractor
 from ETL.loaders.jiten_loader import JitenLoader
 from ETL.models import WordUnderstanding
@@ -12,6 +14,7 @@ from classifier import DifficultyClassifier
 from visitors.japanese.japanese_visitor import JapaneseVisitor
 import re
 import sqlite3
+import time
 from sudachipy import Dictionary
 from ETL.extractors.jiten_extractor import JitenExtractor
 
@@ -213,17 +216,22 @@ if __name__ == '__main__':
     JapaneseVisitor.set_grammar("global_rules.json")
     tokenizer = Dictionary().tokenizer()
     j2e_parts_of_speech = {'助詞': 'particle', '助動詞': 'auxiliary'}
-    for sentence in read_sentences("sentences_test.txt"):
-        morphemes = tokenizer.tokenize(sentence)
 
-        print("Classify!")
-        unknown_words = []
-        for word in morphemes:
-            match word.part_of_speech():
-                case (('助詞' | '助動詞') as part_of_speech, *_):
-                    print(j2e_parts_of_speech[part_of_speech], word.surface())
+    start = time.monotonic()
+    with TatoebaExtractor() as ex:
+        for sentence in ex.extract():
+            morphemes = tokenizer.tokenize(sentence)
 
-            unknown_words.append(word.dictionary_form())
-        unknowns = japanese_understanding.get_unknowns(unknown_words)
-        print(f"unknowns = {unknowns}")
-        print(f"n+{DifficultyClassifier.classify(unknowns)}")
+            unknown_words = []
+            for word in morphemes:
+                match word.part_of_speech():
+                    case (('助詞' | '助動詞') as part_of_speech, *_):
+                        pass #print(j2e_parts_of_speech[part_of_speech], word.surface())
+
+                unknown_words.append(word.dictionary_form())
+            unknowns = japanese_understanding.get_unknowns(unknown_words)
+            #print(f"unknowns = {unknowns}")
+            #print(f"n+{DifficultyClassifier.classify(unknowns)}")
+
+    total = time.monotonic() - start
+    print("time taken = ", total, "seconds")

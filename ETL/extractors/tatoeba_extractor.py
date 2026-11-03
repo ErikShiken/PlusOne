@@ -51,8 +51,9 @@ class TatoebaExtractor(ExtractorBase[Generator[str]]):
         self._file.close()
 
     def extract(self) -> Generator[str]:
-        for line in self._file:
-            yield line
+        for entry in self._file:
+            columns = entry.strip().split("\t")
+            yield columns[-1]
 
     def _download_file(self):
         remaining = self._crawl_delay - (time.monotonic() - self._last_request)
@@ -64,9 +65,3 @@ class TatoebaExtractor(ExtractorBase[Generator[str]]):
             _DOWNLOADED_FILE_PATH.parent.mkdir(parents=True, exist_ok=True)
             with open(_DOWNLOADED_FILE_PATH, "wb") as file:
                 file.write(response.read())
-
-if __name__ == '__main__':
-    with TatoebaExtractor() as ex:
-        for line in ex.extract():
-            print(line)
-
