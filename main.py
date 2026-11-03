@@ -5,12 +5,11 @@ from typing import Iterator, Iterable, Counter
 from contextlib import contextmanager
 from ETL.extractors.wanikani_extractor import WanikaniExtractor
 from ETL.loaders.jiten_loader import JitenLoader
-from ETL.models import Sentence, WordUnderstanding
+from ETL.models import WordUnderstanding
 from ETL.transform.jiten_transformer import JitenTransformer
 from ETL.transform.wanikani_transformer import WanikaniTransformer
 from classifier import DifficultyClassifier
 from visitors.japanese.japanese_visitor import JapaneseVisitor
-import os
 import re
 import sqlite3
 from sudachipy import Dictionary
@@ -145,10 +144,6 @@ if __name__ == '__main__':
     print("Chatper 14: mixins")
     print(JitenLoader.__mro__)
 
-    print("chapter 16: operators")
-    s = Sentence(["本", "を", "読んだ"])
-    print(["昨日"] + s)  # Sentence(['昨日', '本', 'を', '読んだ'])
-
     print("chapter 17: iterators and generators")
     from ETL.extractors.sentence_reader import read_sentences
     iterator = islice(read_sentences("sentences_test.txt"), 3)
@@ -219,7 +214,7 @@ if __name__ == '__main__':
     tokenizer = Dictionary().tokenizer()
     j2e_parts_of_speech = {'助詞': 'particle', '助動詞': 'auxiliary'}
     for sentence in read_sentences("sentences_test.txt"):
-        morphemes = tokenizer.tokenize(sentence.__str__())
+        morphemes = tokenizer.tokenize(sentence)
 
         print("Classify!")
         unknown_words = []
