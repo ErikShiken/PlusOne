@@ -9,6 +9,7 @@ from ETL.extractors.wanikani_extractor import WanikaniExtractor
 from ETL.loaders.jiten_loader import JitenLoader
 from ETL.models import WordUnderstanding
 from ETL.transform.jiten_transformer import JitenTransformer
+from ETL.transform.sentence_transformer import SentenceTransformer
 from ETL.transform.wanikani_transformer import WanikaniTransformer
 from classifier import DifficultyClassifier
 from visitors.japanese.japanese_visitor import JapaneseVisitor
@@ -147,12 +148,6 @@ if __name__ == '__main__':
     print("Chatper 14: mixins")
     print(JitenLoader.__mro__)
 
-    print("chapter 17: iterators and generators")
-    from ETL.extractors.sentence_reader import read_sentences
-    iterator = islice(read_sentences("sentences_test.txt"), 3)
-    for sentence in iterator:
-        print(sentence)
-
     print("sorting sentences in ascending order based on n+x difficulty")
     with open_db("plusone.db") as conn:
         for sentence in conn.execute("SELECT * FROM classified_sentences ORDER BY unknown_count"):
@@ -219,19 +214,9 @@ if __name__ == '__main__':
 
     start = time.monotonic()
     with TatoebaExtractor() as ex:
+        sentence_transformer = SentenceTransformer(tokenizer, japanese_understanding)
         for sentence in ex.extract():
-            morphemes = tokenizer.tokenize(sentence)
-
-            unknown_words = []
-            for word in morphemes:
-                match word.part_of_speech():
-                    case (('助詞' | '助動詞') as part_of_speech, *_):
-                        pass #print(j2e_parts_of_speech[part_of_speech], word.surface())
-
-                unknown_words.append(word.dictionary_form())
-            unknowns = japanese_understanding.get_unknowns(unknown_words)
-            #print(f"unknowns = {unknowns}")
-            #print(f"n+{DifficultyClassifier.classify(unknowns)}")
+            sentence_transformer.transform(sentence)
 
     total = time.monotonic() - start
     print("time taken = ", total, "seconds")
