@@ -9,9 +9,8 @@ from ETL.extractors.wanikani_extractor import WanikaniExtractor
 from ETL.loaders.jiten_loader import JitenLoader
 from ETL.models import WordUnderstanding
 from ETL.transform.jiten_transformer import JitenTransformer
-from ETL.transform.sentence_transformer import SentenceTransformer
+from ETL.transform.sentence_transformer import SentenceTransformer, build_transformer
 from ETL.transform.wanikani_transformer import WanikaniTransformer
-from classifier import DifficultyClassifier
 from visitors.japanese.japanese_visitor import JapaneseVisitor
 import re
 import sqlite3
@@ -206,15 +205,10 @@ if __name__ == '__main__':
         print("number of known words in DB = ", count_in_db)
         print("difference is ", len(actual_words) - count_in_db[0])
 
-    my_words = query_known_words()
-    japanese_understanding = JapaneseVisitor(my_words)
-    JapaneseVisitor.set_grammar("global_rules.json")
-    tokenizer = Dictionary().tokenizer()
-    j2e_parts_of_speech = {'助詞': 'particle', '助動詞': 'auxiliary'}
-
+    print("start tatoeba extractor!")
     start = time.monotonic()
     with TatoebaExtractor() as ex:
-        sentence_transformer = SentenceTransformer(tokenizer, japanese_understanding)
+        sentence_transformer = build_transformer(query_known_words())
         for sentence in ex.extract():
             sentence_transformer.transform(sentence)
 
