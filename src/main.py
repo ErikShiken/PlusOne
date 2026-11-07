@@ -1,22 +1,22 @@
 import logging
 import psutil
 
-from typing import Iterator, Iterable, Counter
+from typing import Iterator, Iterable
 
 from contextlib import contextmanager
 
-from ETL.extractors.tatoeba_extractor import TatoebaExtractor
-from ETL.extractors.wanikani_extractor import WanikaniExtractor
-from ETL.loaders.jiten_loader import JitenLoader
-from ETL.models import WordUnderstanding
-from ETL.transform.jiten_transformer import JitenTransformer
-from ETL.transform.sentence_transformer import transform_worker
-from ETL.transform.wanikani_transformer import WanikaniTransformer
-from multiprocessing import Process, Queue, cpu_count
+from src.ETL.extractors.tatoeba_extractor import TatoebaExtractor
+from src.ETL.extractors.wanikani_extractor import WanikaniExtractor
+from src.ETL.loaders.jiten_loader import JitenLoader
+from src.ETL.models import WordUnderstanding
+from src.ETL.transform.jiten_transformer import JitenTransformer
+from src.ETL.transform.sentence_transformer import transform_worker
+from src.ETL.transform.wanikani_transformer import WanikaniTransformer
+from multiprocessing import Process, Queue
 import re
 import sqlite3
 import time
-from ETL.extractors.jiten_extractor import JitenExtractor
+from src.ETL.extractors.jiten_extractor import JitenExtractor
 
 from itertools import islice, batched
 
@@ -165,7 +165,7 @@ if __name__ == '__main__':
             )
         """)
 
-        jiten_extractor = JitenExtractor("frequency_list_global.csv")
+        jiten_extractor = JitenExtractor("../frequency_list_global.csv")
         rows = jiten_extractor.extract()
         entries = (JitenTransformer().transform(row) for row in rows)
         JitenLoader(conn).load(islice(entries, None))

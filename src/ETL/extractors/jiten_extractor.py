@@ -1,6 +1,6 @@
 from typing import Iterator
 
-from ETL.extractors.extractor_base import ExtractorBase
+from src.ETL.extractors.extractor_base import ExtractorBase
 import codecs
 import csv
 

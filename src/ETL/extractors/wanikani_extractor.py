@@ -1,6 +1,6 @@
 from typing import Mapping, Callable
 
-from ETL.extractors.extractor_base import ExtractorBase
+from src.ETL.extractors.extractor_base import ExtractorBase
 import os
 import requests
 

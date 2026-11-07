@@ -2,8 +2,8 @@
 
 from typing import Mapping
 
-from ETL.transform.transform_base import TransformBase
-from ETL.models import WordUnderstanding
+from src.ETL.transform.transform_base import TransformBase
+from src.ETL.models import WordUnderstanding
 
 
 class WanikaniTransformer(TransformBase[Mapping[str, str], list[WordUnderstanding]]):

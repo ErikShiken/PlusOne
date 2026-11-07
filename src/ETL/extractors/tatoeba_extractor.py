@@ -6,7 +6,7 @@ from collections.abc import Generator
 from pathlib import Path
 from urllib.robotparser import RobotFileParser
 
-from ETL.extractors.extractor_base import ExtractorBase
+from src.ETL.extractors.extractor_base import ExtractorBase
 
 logging.basicConfig(level=logging.DEBUG)
 

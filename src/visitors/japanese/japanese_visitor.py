@@ -4,8 +4,8 @@ import json
 from types import MappingProxyType
 from typing import Iterable, Self, Mapping, Any
 import re
-from visitors.sentence_visitor import SentenceVisitor
-from visitors.registry import HANDLERS, handles
+from src.visitors.sentence_visitor import SentenceVisitor
+from src.visitors.registry import HANDLERS, handles
 
 
 PUNCTUATION = re.compile(r"[、。「」『』！？・]+")

@@ -2,10 +2,10 @@
 
 from sudachipy import Dictionary
 
-from ETL.transform.transform_base import TransformBase
-from classifier import DifficultyClassifier
-from visitors.japanese.japanese_visitor import JapaneseVisitor
-from visitors.sentence_visitor import SentenceVisitor
+from src.ETL.transform.transform_base import TransformBase
+from src.classifier import DifficultyClassifier
+from src.visitors.japanese.japanese_visitor import JapaneseVisitor
+from src.visitors.sentence_visitor import SentenceVisitor
 
 
 class SentenceTransformer(TransformBase[str, tuple[str, int]]):

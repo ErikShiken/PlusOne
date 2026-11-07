@@ -1,5 +1,5 @@
-from ETL.transform.transform_base import TransformBase
-from ETL.models import WordReading
+from src.ETL.transform.transform_base import TransformBase
+from src.ETL.models import WordReading
 
 class JitenTransformer(TransformBase[dict, WordReading]):
     language = "ja"

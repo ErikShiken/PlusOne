@@ -1,5 +1,5 @@
 .idea/*
 __pycache__
 *.db
-data/*
-labs/*
+src/data/*
+src/labs/*

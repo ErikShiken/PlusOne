@@ -1,0 +1,33 @@
+# .github/workflows/quality_check.yaml
+name: QualityCheck
+
+on:
+  push:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  pylint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.15' # Change to your project's Python version
+          cache: 'pip'           # Caches pip packages to speed up future runs
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pylint
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Run Pylint
+        run: |
+          python -m pylint src

@@ -1,12 +1,12 @@
 from typing import Iterable
 
-from observability.log_mixin import LogMixin
-from ETL.loaders.loader_base import LoaderBase
-from ETL.models import WordReading
+from src.observability.log_mixin import LogMixin
+from src.ETL.loaders.loader_base import LoaderBase
+from src.ETL.models import WordReading
 
 import sqlite3
 
-from performance.clock_decorator import clock
+from src.performance.clock_decorator import clock
 
 
 class JitenLoader(LogMixin, LoaderBase):
