@@ -1,5 +1,5 @@
 import logging
-import multiprocessing
+import psutil
 
 from typing import Iterator, Iterable, Counter
 
@@ -18,7 +18,7 @@ import sqlite3
 import time
 from ETL.extractors.jiten_extractor import JitenExtractor
 
-from itertools import islice
+from itertools import islice, batched
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -84,25 +84,26 @@ def get_srs_mapping() -> dict[str, str]:
         """).fetchall()
     return {row[0]: row[1] for row in rows}
 
-def start_jobs(procs: int, jobs, results, known_words: set[str], sentences: Iterable[str]) -> None:
-    for sentence_to_classify in sentences:
-        jobs.put(sentence_to_classify)
+def start_jobs(procs: int, transform_jobs, transform_results, known_words: set[str], sentences: Iterable[str]) -> None:
+    batch_size = 100
+    for batch in batched(sentences, batch_size):
+        transform_jobs.put(batch)
 
     for _ in range(procs):
-        proc = Process(target=transform_worker, args=(known_words, jobs, results))
+        proc = Process(target=transform_worker, args=(known_words, transform_jobs, transform_results))
         proc.start()
-        jobs.put(None)
+        transform_jobs.put(None)
 
 def report(num_procs: int, process_results) -> list[tuple[str, int]]:
-    classified = []
+    classifications_to_report = []
     procs_done = 0
     while procs_done < num_procs:
         result = process_results.get()
         if result is None:
             procs_done += 1
         else:
-            classified.append(result)
-    return classified
+            classifications_to_report.extend(result)
+    return classifications_to_report
 
 def save_classified(db_conn, classified: list[tuple[str, int]]) -> None:
     db_conn.executemany(
@@ -222,7 +223,7 @@ if __name__ == '__main__':
     with TatoebaExtractor() as ex:
         jobs = Queue()
         results = Queue()
-        allowed_procs = cpu_count() - 1
+        allowed_procs = psutil.cpu_count(logical=False)
         start_jobs(allowed_procs, jobs, results, query_known_words(), ex.extract())
         classified = report(allowed_procs, results)
 

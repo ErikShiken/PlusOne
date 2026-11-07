@@ -30,6 +30,9 @@ def build_transformer(known_words: set[str]) -> SentenceTransformer:
 
 def transform_worker(known_words, jobs, results) -> None:
     transformer = build_transformer(known_words)
-    while (sentence := jobs.get()) is not None:
-        results.put(transformer.transform(sentence))
+    while (batch := jobs.get()) is not None:
+        batch_results = []
+        for sentence in batch:
+            batch_results.append(transformer.transform(sentence))
+        results.put(batch_results)
     results.put(None)
