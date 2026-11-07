@@ -1,16 +1,23 @@
+"""Transformer that scores Japanese sentences by counting unknown words."""
+
+from sudachipy import Dictionary
+
 from ETL.transform.transform_base import TransformBase
 from classifier import DifficultyClassifier
 from visitors.japanese.japanese_visitor import JapaneseVisitor
 from visitors.sentence_visitor import SentenceVisitor
 
-from sudachipy import Dictionary
 
 class SentenceTransformer(TransformBase[str, tuple[str, int]]):
+    """Tokenizes a sentence and returns it with a difficulty score."""
+
     def __init__(self, tokenizer, understanding: SentenceVisitor):
+        """Initialize with a Sudachi tokenizer and a sentence visitor."""
         self.tokenizer = tokenizer
         self.visitor = understanding
 
     def transform(self, sentence: str) -> tuple[str, int]:
+        """Return the sentence paired with its difficulty classification."""
         morphemes = self.tokenizer.tokenize(sentence)
 
         unknown_words = []
@@ -23,12 +30,14 @@ class SentenceTransformer(TransformBase[str, tuple[str, int]]):
         return sentence, DifficultyClassifier.classify(self.visitor.get_unknowns(unknown_words))
 
 def build_transformer(known_words: set[str]) -> SentenceTransformer:
+    """Construct a SentenceTransformer wired with grammar and a Sudachi tokenizer."""
     understanding = JapaneseVisitor(known_words)
     JapaneseVisitor.set_grammar("global_rules.json")
     tokenizer = Dictionary().tokenizer()
     return SentenceTransformer(tokenizer, understanding)
 
 def transform_worker(known_words, jobs, results) -> None:
+    """Consume sentence batches from jobs, transform them, and push results."""
     transformer = build_transformer(known_words)
     while (batch := jobs.get()) is not None:
         batch_results = []
