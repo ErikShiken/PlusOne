@@ -27,3 +27,9 @@ def build_transformer(known_words: set[str]) -> SentenceTransformer:
     JapaneseVisitor.set_grammar("global_rules.json")
     tokenizer = Dictionary().tokenizer()
     return SentenceTransformer(tokenizer, understanding)
+
+def transform_worker(known_words, jobs, results) -> None:
+    transformer = build_transformer(known_words)
+    while (sentence := jobs.get()) is not None:
+        results.put(transformer.transform(sentence))
+    results.put(None)

@@ -9,13 +9,12 @@ from ETL.extractors.wanikani_extractor import WanikaniExtractor
 from ETL.loaders.jiten_loader import JitenLoader
 from ETL.models import WordUnderstanding
 from ETL.transform.jiten_transformer import JitenTransformer
-from ETL.transform.sentence_transformer import SentenceTransformer, build_transformer
+from ETL.transform.sentence_transformer import SentenceTransformer, build_transformer, transform_worker
 from ETL.transform.wanikani_transformer import WanikaniTransformer
-from visitors.japanese.japanese_visitor import JapaneseVisitor
+from multiprocessing import Process
 import re
 import sqlite3
 import time
-from sudachipy import Dictionary
 from ETL.extractors.jiten_extractor import JitenExtractor
 
 from itertools import islice
@@ -84,6 +83,14 @@ def get_srs_mapping() -> dict[str, str]:
         """).fetchall()
     return {row[0]: row[1] for row in rows}
 
+def start_jobs(procs: int, jobs, results, known_words: set[str], sentences: Iterable[str]) -> None:
+    for sentence_to_classify in sentences:
+        jobs.put(sentence_to_classify)
+
+    for _ in range(procs):
+        proc = Process(target=transform_worker, args=(known_words, jobs, results))
+        proc.start()
+        jobs.put(None)
 
 if __name__ == '__main__':
     with open_db("plusone.db") as conn:
