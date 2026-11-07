@@ -1,4 +1,5 @@
 import logging
+import multiprocessing
 
 from typing import Iterator, Iterable, Counter
 
@@ -11,7 +12,7 @@ from ETL.models import WordUnderstanding
 from ETL.transform.jiten_transformer import JitenTransformer
 from ETL.transform.sentence_transformer import SentenceTransformer, build_transformer, transform_worker
 from ETL.transform.wanikani_transformer import WanikaniTransformer
-from multiprocessing import Process
+from multiprocessing import Process, Queue, cpu_count
 import re
 import sqlite3
 import time
@@ -92,6 +93,23 @@ def start_jobs(procs: int, jobs, results, known_words: set[str], sentences: Iter
         proc.start()
         jobs.put(None)
 
+def report(num_procs: int, process_results) -> list[tuple[str, int]]:
+    classified = []
+    procs_done = 0
+    while procs_done < num_procs:
+        result = process_results.get()
+        if result is None:
+            procs_done += 1
+        else:
+            classified.append(result)
+    return classified
+
+def save_classified(db_conn, classified: list[tuple[str, int]]) -> None:
+    db_conn.executemany(
+        "INSERT OR REPLACE INTO classified_sentences (sentence, unknown_count) VALUES (?, ?)",
+        classified,
+    )
+
 if __name__ == '__main__':
     with open_db("plusone.db") as conn:
         conn.execute("PRAGMA foreign_keys = ON")
@@ -151,19 +169,6 @@ if __name__ == '__main__':
         print("readings", conn.execute("SELECT COUNT(*) FROM readings").fetchone())
         print("vocabulary", conn.execute("SELECT COUNT(*) FROM vocabulary").fetchone())
 
-    print("Chatper 14: mixins")
-    print(JitenLoader.__mro__)
-
-    print("sorting sentences in ascending order based on n+x difficulty")
-    with open_db("plusone.db") as conn:
-        for sentence in conn.execute("SELECT * FROM classified_sentences ORDER BY unknown_count"):
-            print(sentence)
-
-    print("sorting sentences in no order based on n+x difficulty")
-    with open_db("plusone.db") as conn:
-        for row in conn.execute("SELECT * FROM classified_sentences"):
-            print(row)
-
     with open_db("plusone.db") as conn:
         subject_update_time = conn.execute("SELECT last_synced FROM update_times WHERE endpoint = 'subjects'").fetchone()
         if subject_update_time:
@@ -215,9 +220,13 @@ if __name__ == '__main__':
     print("start tatoeba extractor!")
     start = time.monotonic()
     with TatoebaExtractor() as ex:
-        sentence_transformer = build_transformer(query_known_words())
-        for sentence in ex.extract():
-            sentence_transformer.transform(sentence)
+        jobs = Queue()
+        results = Queue()
+        allowed_procs = cpu_count() - 1
+        start_jobs(allowed_procs, jobs, results, query_known_words(), ex.extract())
+        classified = report(allowed_procs, results)
 
     total = time.monotonic() - start
+    with open_db("plusone.db") as db_conn:
+        save_classified(db_conn, classified)
     print("time taken = ", total, "seconds")
