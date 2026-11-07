@@ -30,7 +30,8 @@ class JapaneseVisitor(SentenceVisitor):
         return handler(self, item)
 
     def get_unknowns(self, sentence: Iterable[str]) -> set[str]:
-        """Return the set of tokens in the sentence that are neither known vocabulary nor grammar."""
+        """Return the set of tokens in the sentence that are neither
+        known vocabulary nor grammar."""
         unknowns = set()
         for word in sentence:
             if is_punctuation(word):

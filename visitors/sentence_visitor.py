@@ -1,15 +1,20 @@
+"""Abstract base class for sentence visitors that identify unknown tokens."""
+
 from abc import ABC, abstractmethod
 from typing import Iterable
 
+
 class SentenceVisitor(ABC):
+    """Base class for visitors that check sentence tokens against known data."""
+
     @abstractmethod
     def visit_vocabulary(self, vocabulary: str) -> None:
-        pass
+        """Handle a vocabulary token."""
 
     @abstractmethod
     def visit_grammar_rule(self, grammar_rule: str) -> None:
-        pass
+        """Handle a grammar rule token."""
 
     @abstractmethod
     def get_unknowns(self, sentence: Iterable[str]):
-        pass
+        """Return the set of tokens in the sentence that are unknown."""
