@@ -9,7 +9,8 @@ class WanikaniExtractor(ExtractorBase[Mapping[str, str]]):
     update_filter = "&updated_after="
     assignments_url = "https://api.wanikani.com/v2/assignments?subject_types=vocabulary,kana_vocabulary"
     subjects_web_query = "https://api.wanikani.com/v2/subjects?types=vocabulary,kana_vocabulary"
-    def __init__(self, last_assignment_update_time: str | None = None, last_subject_update_time: str | None = None):
+    def __init__(self, last_assignment_update_time: str | None = None,
+                 last_subject_update_time: str | None = None):
         self.token = os.environ["WANIKANI_TOKEN"]
         self.headers = {
             "Wanikani-Revision": "20170710",
@@ -19,8 +20,10 @@ class WanikaniExtractor(ExtractorBase[Mapping[str, str]]):
         self.last_subject_update_time = last_subject_update_time
 
     def extract(self) -> Mapping[str, str]:
-        subject_table, subject_update_time = self._get_data(self.assignments_url, self._assignment_pair, self.last_assignment_update_time)
-        mapping_table, mapping_update_time = self._get_data(self.subjects_web_query, self._subject_pair, self.last_subject_update_time)
+        subject_table, subject_update_time = self._get_data(self.assignments_url, self._assignment_pair,
+                                                            self.last_assignment_update_time)
+        mapping_table, mapping_update_time = self._get_data(self.subjects_web_query, self._subject_pair,
+                                                            self.last_subject_update_time)
         return {mapping_table[subject_id]: stage for subject_id, stage in subject_table.items()}
 
     def extract_subjects(self) -> tuple[Mapping[str, str], str | None]:
