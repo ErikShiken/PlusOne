@@ -2,3 +2,5 @@ sudachidict-core==20261015
 SudachiPy==0.7.0
 requests==2.34.2
 psutil
+pytest==9.2.0
+pylint==4.1.3

@@ -10,7 +10,7 @@ from ETL.extractors.wanikani_extractor import WanikaniExtractor
 from ETL.loaders.jiten_loader import JitenLoader
 from ETL.models import WordUnderstanding
 from ETL.transform.jiten_transformer import JitenTransformer
-from ETL.transform.sentence_transformer import SentenceTransformer, build_transformer, transform_worker
+from ETL.transform.sentence_transformer import transform_worker
 from ETL.transform.wanikani_transformer import WanikaniTransformer
 from multiprocessing import Process, Queue, cpu_count
 import re
@@ -51,7 +51,8 @@ def load_known_words(conn: sqlite3.Connection, words: Iterable[str]) -> None:
 
 def update_times(conn: sqlite3.Connection, endpoint: str, last_synced: str) -> None:
     conn.execute(
-        "INSERT OR REPLACE INTO update_times (endpoint, last_synced) VALUES (?, ?)", (endpoint, last_synced)
+        "INSERT OR REPLACE INTO update_times (endpoint, last_synced) VALUES (?, ?)",
+        (endpoint, last_synced)
     )
 
 def is_katakana_only(word: str) -> bool:
@@ -84,13 +85,15 @@ def get_srs_mapping() -> dict[str, str]:
         """).fetchall()
     return {row[0]: row[1] for row in rows}
 
-def start_jobs(procs: int, transform_jobs, transform_results, known_words: set[str], sentences: Iterable[str]) -> None:
+def start_jobs(procs: int, transform_jobs, transform_results, known_words: set[str],
+               sentences: Iterable[str]) -> None:
     batch_size = 100
     for batch in batched(sentences, batch_size):
         transform_jobs.put(batch)
 
     for _ in range(procs):
-        proc = Process(target=transform_worker, args=(known_words, transform_jobs, transform_results))
+        proc = Process(target=transform_worker, args=(known_words, transform_jobs,
+                                                      transform_results))
         proc.start()
         transform_jobs.put(None)
 
