@@ -5,3 +5,4 @@ src/data/*
 src/labs/*
 pytest-cache-files*
 allure-results
+node_modules
