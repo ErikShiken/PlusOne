@@ -20,13 +20,12 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
-          python-version: '3.15' # Change to your project's Python version
-          cache: 'pip'           # Caches pip packages to speed up future runs
+          python-version: '3.15'
+          cache: 'pip'
 
-      - name: Install Dependencies
+      - name: Install Python Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pylint
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Set up Node
@@ -35,7 +34,7 @@ jobs:
           node-version-file: 'package.json'
           cache: 'npm'
 
-      - name: Install Dependencies
+      - name: Install Node Dependencies
         run: npm ci
 
       - name: Run Tests
@@ -44,16 +43,13 @@ jobs:
         run: |
           python -m pytest .
 
-      - name: Run Allure
-        run: npx allure --version
-
       - name: Generate Allure Report
         if: always()
-        run: npx allure generate pytest-cache-files
+        run: npx allure generate allure-results
 
       - name: Upload Allure Report
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: allure-report
-          path: reports
+          path: allure-report
