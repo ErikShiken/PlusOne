@@ -1,3 +1,9 @@
+"""Main entry point for the PlusOne application.
+
+This module orchestrates the ETL pipeline: it loads vocabulary data from Jiten,
+syncs Wanikani SRS data, and classifies Tatoeba sentences by difficulty.
+"""
+
 import logging
 import psutil
 
@@ -24,6 +30,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 @contextmanager
 def open_db(name):
+    """Open a SQLite database connection with automatic commit/rollback."""
     connection = sqlite3.connect(name)
     try:
         yield connection
@@ -35,12 +42,14 @@ def open_db(name):
         connection.close()
 
 def find_vocab_id(conn: sqlite3.Connection, word: str) -> int | None:
+    """Look up the vocabulary ID for a given word."""
     row = conn.execute(
         "SELECT id FROM vocabulary WHERE word = ?", (word,)
     ).fetchone()
     return row[0] if row else None
 
 def load_known_words(conn: sqlite3.Connection, words: Iterable[str]) -> None:
+    """Insert known words into the known_words table."""
     for word in words:
         vocab_id = find_vocab_id(conn, word)
         if vocab_id is None:
@@ -50,12 +59,14 @@ def load_known_words(conn: sqlite3.Connection, words: Iterable[str]) -> None:
         )
 
 def update_times(conn: sqlite3.Connection, endpoint: str, last_synced: str) -> None:
+    """Record the last sync time for an API endpoint."""
     conn.execute(
         "INSERT OR REPLACE INTO update_times (endpoint, last_synced) VALUES (?, ?)",
         (endpoint, last_synced)
     )
 
 def is_katakana_only(word: str) -> bool:
+    """Return True if the word consists solely of katakana characters."""
     punctuation_class = "[、。「」『』！？・]"
     if re.search(rf"{punctuation_class}+", word):
         return False
@@ -65,9 +76,11 @@ def is_katakana_only(word: str) -> bool:
     return bool(re.fullmatch(r"[\u30a0-\u30ff]+", word))
 
 def get_known_strings(words: Iterable[WordUnderstanding]) -> Iterator[str]:
+    """Yield the word strings from WordUnderstanding objects marked as known."""
     return (w.word for w in words if w.known)
 
 def query_known_words() -> set[str]:
+    """Query the database for all known words."""
     with open_db("plusone.db") as conn:
         rows = conn.execute("""
                     SELECT vocabulary.word
@@ -77,6 +90,7 @@ def query_known_words() -> set[str]:
     return {row[0] for row in rows}
 
 def get_srs_mapping() -> dict[str, str]:
+    """Query the database for Wanikani SRS state mappings."""
     with open_db("plusone.db") as conn:
         rows = conn.execute("""
             SELECT characters, srs_state
@@ -87,6 +101,7 @@ def get_srs_mapping() -> dict[str, str]:
 
 def start_jobs(procs: int, transform_jobs, transform_results, known_words: set[str],
                sentences: Iterable[str]) -> None:
+    """Start worker processes to transform sentences in parallel."""
     batch_size = 100
     for batch in batched(sentences, batch_size):
         transform_jobs.put(batch)
@@ -98,6 +113,7 @@ def start_jobs(procs: int, transform_jobs, transform_results, known_words: set[s
         transform_jobs.put(None)
 
 def report(num_procs: int, process_results) -> list[tuple[str, int]]:
+    """Collect transformation results from all worker processes."""
     classifications_to_report = []
     procs_done = 0
     while procs_done < num_procs:
@@ -109,6 +125,7 @@ def report(num_procs: int, process_results) -> list[tuple[str, int]]:
     return classifications_to_report
 
 def save_classified(db_conn, classified: list[tuple[str, int]]) -> None:
+    """Save classified sentences to the database."""
     db_conn.executemany(
         "INSERT OR REPLACE INTO classified_sentences (sentence, unknown_count) VALUES (?, ?)",
         classified,

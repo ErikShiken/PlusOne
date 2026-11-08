@@ -1,3 +1,5 @@
+"""Extractor for Tatoeba Japanese sentences."""
+
 import bz2
 import logging
 import time
@@ -22,12 +24,15 @@ _DOWNLOADED_FILE_NAME = "output_file.tsv.bz2"
 _DOWNLOADED_FILE_PATH = Path(__file__).parents[2] / "data" / _DOWNLOADED_FILE_NAME
 
 class TatoebaExtractor(ExtractorBase[Generator[str]]):
+    """Extracts Japanese sentences from the Tatoeba corpus."""
+
     language = "ja"
     _crawl_delay = 0
     _downloads_allowed = None
     _last_request = None
 
     def __enter__(self):
+        """Check robots.txt, download the corpus if needed, and open the file."""
         rp = RobotFileParser()
         rp.set_url(f"{_URL}robots.txt")
         rp.read()
@@ -48,14 +53,17 @@ class TatoebaExtractor(ExtractorBase[Generator[str]]):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        """Close the corpus file."""
         self._file.close()
 
     def extract(self) -> Generator[str]:
+        """Yield the sentence text from each TSV row."""
         for entry in self._file:
             columns = entry.strip().split("\t")
             yield columns[-1]
 
     def _download_file(self):
+        """Download the Tatoeba corpus file, respecting crawl delay."""
         remaining = self._crawl_delay - (time.monotonic() - self._last_request)
         if remaining > 0:
             time.sleep(remaining)

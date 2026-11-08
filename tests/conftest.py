@@ -1,4 +1,5 @@
-import socket, pytest, requests, os
+import os
+import socket, pytest, requests
 
 WANIKANI_API_HOST = "https://api.wanikani.com/v2"
 HTTPS_PORT = 443

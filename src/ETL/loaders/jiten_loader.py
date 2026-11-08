@@ -1,3 +1,5 @@
+"""Loader for Jiten frequency list data into SQLite."""
+
 from typing import Iterable
 
 from src.observability.log_mixin import LogMixin
@@ -10,9 +12,12 @@ from src.performance.clock_decorator import clock
 
 
 class JitenLoader(LogMixin, LoaderBase):
+    """Loads WordReading entries into the vocabulary and readings tables."""
+
     language = "ja"
 
     def __init__(self, conn: sqlite3.Connection, *, batch_limit: int = 1000):
+        """Initialize with a database connection and batch size limit."""
         super().__init__()
         self.conn = conn
         self.batch_limit = batch_limit
@@ -22,6 +27,7 @@ class JitenLoader(LogMixin, LoaderBase):
 
     @clock
     def load(self, entries: Iterable[WordReading]) -> None:
+        """Load word readings into the database in batches."""
         self.log("Loading entries")
         ids = {}
         batch = []
@@ -42,5 +48,6 @@ class JitenLoader(LogMixin, LoaderBase):
         self.log(f"load finished: {len(ids)} words")
 
     def __repr__(self) -> str:
+        """Return a string representation of the loader."""
         class_name = type(self).__name__
         return f"{class_name}(batch_limit={self.batch_limit!r})"
