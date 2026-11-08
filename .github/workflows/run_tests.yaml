@@ -2,12 +2,18 @@ name: RunTests
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '17 11 * * *'
 
 permissions:
   pull-requests: write
   checks: write
   pages: write
   id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 jobs:
   pytest:
@@ -48,9 +54,17 @@ jobs:
         run: |
           python -m pytest .
 
+      - name: Fetch Previous History
+        if: always()
+        run: curl -fsSL https://erikshiken.github.io/PlusOne/history.jsonl -o history.jsonl || echo "No previous history yet"
+
       - name: Generate Allure Report
         if: always()
         run: npx allure generate allure-results
+
+      - name: Add History to Report
+        if: always()
+        run: cp history.jsonl allure-report/
 
       - name: Upload Allure Report
         if: always()
