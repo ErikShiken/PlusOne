@@ -46,3 +46,14 @@ jobs:
 
       - name: Run Allure
         run: npx allure --version
+
+      - name: Generate Allure Report
+        if: always()
+        run: npx allure generate pytest-cache-files
+
+      - name: Upload Allure Report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: allure-report
+          path: reports
