@@ -40,5 +40,7 @@ jobs:
           npm install -g allure 
 
       - name: Run Tests
+        env:
+          WANIKANI_TOKEN: ${{ secrets.WANIKANI_TOKEN }}
         run: |
           python -m pytest .
