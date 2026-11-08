@@ -4,7 +4,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  pull-requests: write
+  checks: write
 
 jobs:
   pytest:
@@ -25,6 +26,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install pylint
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Set up Node
+        uses: actions/setup-node@7
+        with:
+          node-version: 'package.json'
+          cache: 'npm'
+
+      - name: Install Allure CI
+        run: |
+          npm install -g allure 
 
       - name: Run Tests
         run: |
