@@ -10,4 +10,5 @@ class JitenTransformer(TransformBase[dict, WordReading]):
 
     def transform(self, data_row: dict[str, str]) -> WordReading:
         """Convert a Jiten CSV row dictionary into a WordReading."""
-        return WordReading(word=data_row["Word"], reading=data_row["Form"], frequency_rank=data_row["Rank"])
+        return WordReading(word=data_row["Word"], reading=data_row["Form"],
+                           frequency_rank=data_row["Rank"])

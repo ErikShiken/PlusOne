@@ -3,7 +3,7 @@
 # -----------------------------------------------------------------------------
 [tool.pylint.main]
 # Fail the build if the total score drops below this number
-fail-under = 8.5
+fail-under = 8.6
 
 # Files or directories to ignore during linting (e.g., virtual environments)
 ignore = [".venv", "venv", "env", "build", "dist"]

@@ -2,9 +2,11 @@
 
 from typing import Mapping, Callable
 
-from src.ETL.extractors.extractor_base import ExtractorBase
 import os
 import requests
+
+from src.ETL.extractors.extractor_base import ExtractorBase
+
 
 class WanikaniExtractor(ExtractorBase[Mapping[str, str]]):
     """Extracts vocabulary and SRS assignment data from the Wanikani API."""
@@ -27,9 +29,9 @@ class WanikaniExtractor(ExtractorBase[Mapping[str, str]]):
 
     def extract(self) -> Mapping[str, str]:
         """Extract and combine subject and assignment data into a word-to-stage mapping."""
-        subject_table, subject_update_time = self._get_data(self.assignments_url, self._assignment_pair,
+        subject_table, _ = self._get_data(self.assignments_url, self._assignment_pair,
                                                             self.last_assignment_update_time)
-        mapping_table, mapping_update_time = self._get_data(self.subjects_web_query, self._subject_pair,
+        mapping_table, _ = self._get_data(self.subjects_web_query, self._subject_pair,
                                                             self.last_subject_update_time)
         return {mapping_table[subject_id]: stage for subject_id, stage in subject_table.items()}
 
@@ -51,7 +53,9 @@ class WanikaniExtractor(ExtractorBase[Mapping[str, str]]):
         """Extract (id, characters) from a subject API item."""
         return item['id'], item['data']['characters']
 
-    def _get_data(self, url: str, pair_func : Callable[[dict], tuple[str, str]], last_update_time: str | None) -> tuple[Mapping[str, str], str | None]:
+    def _get_data(self, url: str,
+                  pair_func : Callable[[dict], tuple[str, str]],
+                  last_update_time: str | None) -> tuple[Mapping[str, str], str | None]:
         """Fetch paginated data from the Wanikani API."""
         data = {}
         last_update = None

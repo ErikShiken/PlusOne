@@ -12,4 +12,3 @@ class LoaderBase(ABC):
     @abstractmethod
     def load(self, entries: Iterable[WordReading]) -> None:
         """Load the given entries into storage."""
-        pass

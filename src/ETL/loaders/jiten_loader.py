@@ -22,7 +22,8 @@ class JitenLoader(LogMixin, LoaderBase):
         self.conn = conn
         self.batch_limit = batch_limit
         self.vocab_sql = "INSERT OR IGNORE INTO vocabulary (word) VALUES (?)"
-        self.reading_sql = "INSERT OR IGNORE INTO readings (vocab_id, reading, frequency_rank) VALUES (?, ?, ?)"
+        self.reading_sql = ("INSERT OR IGNORE INTO readings (vocab_id, reading, frequency_rank) "
+                            "VALUES (?, ?, ?)")
         self.find_word = "SELECT id FROM vocabulary WHERE word = ?"
 
     @clock
