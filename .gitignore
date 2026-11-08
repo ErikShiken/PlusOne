@@ -6,3 +6,5 @@ src/labs/*
 pytest-cache-files*
 allure-results
 node_modules
+allure-report
+history.jsonl

@@ -1,0 +1,3 @@
+name: PlusOne Tests
+historyPath: ./history.jsonl
+historyLimit: 30
