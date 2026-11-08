@@ -2,5 +2,8 @@
   "private": true,
   "devDependencies": {
     "allure": "3.33.0"
+  },
+  "engines": {
+    "node": "v22.23.4"
   }
 }
