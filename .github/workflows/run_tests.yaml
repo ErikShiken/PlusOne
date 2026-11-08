@@ -28,7 +28,7 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Set up Node
-        uses: actions/setup-node@6
+        uses: actions/setup-node@5
         with:
           node-version: 'package.json'
           cache: 'npm'
